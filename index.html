@@ -16,6 +16,565 @@
         <link rel="stylesheet" href="/css/style.css">
          <!-- Favicon -->
         <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml" >
-    </head>    
+    </head>
+    <body>
+
+        <!--APPLICATION SHELL -->
+
+        <main id="app">
+
+            <!-- HEADER -->
+
+            <header class="site-header">
+
+                <div class="brand">
+                    <h1>IMAGE CONVERTER</h1>
+                    <p class="brand-subtitle">
+                        FAST. LOCAL. NO UPLOADS.
+                    </p>
+                </div>
+
+                <div
+                    class="system-status"
+                    id="system-status"
+                    aria-live="polite"
+                >
+                    <span
+                        class="status-indicator"
+                        aria-hidden="true"
+                    ></span>
+
+                    <span id="status-text">
+                        READY
+                    </span>
+                </div>
+
+            </header>
+
+
+            <!--MAIN WORKSPACE-->
+
+            <section
+                class="converter-workspace"
+                aria-label="Image converter"
+            >
+
+                <!--UPLOAD PANEL-->
+
+                <section
+                    class="panel upload-panel"
+                    id="upload-panel"
+                >
+
+                    <div class="panel-header">
+                        <span class="panel-index">01</span>
+
+                        <h2>INPUT</h2>
+                    </div>
+
+                    <div
+                        class="drop-zone"
+                        id="drop-zone"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Upload an image"
+                    >
+
+                        <div class="drop-zone-content">
+
+                            <span
+                                class="drop-zone-label"
+                                aria-hidden="true"
+                            >
+                                DROP IMAGE HERE
+                            </span>
+
+                            <span class="drop-zone-divider">
+                                OR
+                            </span>
+
+                            <label
+                                class="file-select-button"
+                                for="file-input"
+                            >
+                                SELECT FILE
+                            </label>
+
+                            <input
+                                id="file-input"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml,image/tiff,image/x-icon"
+                                hidden
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <p class="upload-info">
+                        JPG / PNG / WEBP / AVIF / SVG / ICO / TIFF
+                    </p>
+
+                </section>
+
+
+                <!--FILE INFORMATION-->
+
+                <section
+                    class="panel file-panel"
+                    id="file-panel"
+                    hidden
+                >
+
+                    <div class="panel-header">
+                        <span class="panel-index">02</span>
+
+                        <h2>FILE</h2>
+                    </div>
+
+                    <div class="file-information">
+
+                        <div class="file-preview-container">
+
+                            <div
+                                class="file-preview"
+                                id="file-preview"
+                            >
+                                <!-- Preview inserted by JavaScript -->
+                            </div>
+
+                        </div>
+
+                        <div class="file-details">
+
+                            <div class="data-row">
+                                <span>NAME</span>
+                                <strong id="file-name">
+                                    —
+                                </strong>
+                            </div>
+
+                            <div class="data-row">
+                                <span>TYPE</span>
+                                <strong id="file-type">
+                                    —
+                                </strong>
+                            </div>
+
+                            <div class="data-row">
+                                <span>SIZE</span>
+                                <strong id="file-size">
+                                    —
+                                </strong>
+                            </div>
+
+                            <div class="data-row">
+                                <span>DIMENSIONS</span>
+                                <strong id="file-dimensions">
+                                    —
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="text-button"
+                        id="remove-file-button"
+                    >
+                        REMOVE FILE
+                    </button>
+
+                </section>
+
+
+                <!--CONVERSION SETTINGS-->
+
+                <section
+                    class="panel settings-panel"
+                    id="settings-panel"
+                    hidden
+                >
+
+                    <div class="panel-header">
+                        <span class="panel-index">03</span>
+
+                        <h2>CONVERT</h2>
+                    </div>
+
+
+                    <div class="settings-grid">
+
+                        <!-- INPUT FORMAT -->
+
+                        <div class="setting">
+
+                            <label for="input-format">
+                                FROM
+                            </label>
+
+                            <select
+                                id="input-format"
+                                disabled
+                            >
+                                <option value="">
+                                    AUTO
+                                </option>
+                            </select>
+
+                        </div>
+
+
+                        <!-- OUTPUT FORMAT -->
+
+                        <div class="setting">
+
+                            <label for="output-format">
+                                TO
+                            </label>
+
+                            <select id="output-format">
+
+                                <option value="png">
+                                    PNG
+                                </option>
+
+                                <option value="jpeg">
+                                    JPG
+                                </option>
+
+                                <option value="webp">
+                                    WEBP
+                                </option>
+
+                                <option value="avif">
+                                    AVIF
+                                </option>
+
+                                <option value="ico">
+                                    ICO / FAVICON
+                                </option>
+
+                                <option value="svg">
+                                    SVG
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!--QUALITY-->
+
+                    <div
+                        class="setting quality-setting"
+                        id="quality-setting"
+                    >
+
+                        <div class="setting-label-row">
+
+                            <label for="quality">
+                                QUALITY
+                            </label>
+
+                            <output
+                                id="quality-value"
+                                for="quality"
+                            >
+                                85
+                            </output>
+
+                        </div>
+
+                        <input
+                            id="quality"
+                            type="range"
+                            min="1"
+                            max="100"
+                            value="85"
+                        >
+
+                    </div>
+
+
+                    <!--RESIZE-->
+
+                    <div
+                        class="resize-settings"
+                        id="resize-settings"
+                    >
+
+                        <div class="setting">
+
+                            <label for="output-width">
+                                WIDTH
+                            </label>
+
+                            <input
+                                id="output-width"
+                                type="number"
+                                min="1"
+                                placeholder="AUTO"
+                                inputmode="numeric"
+                            >
+
+                        </div>
+
+                        <div class="setting">
+
+                            <label for="output-height">
+                                HEIGHT
+                            </label>
+
+                            <input
+                                id="output-height"
+                                type="number"
+                                min="1"
+                                placeholder="AUTO"
+                                inputmode="numeric"
+                            >
+
+                        </div>
+
+                        <label class="checkbox-setting">
+
+                            <input
+                                id="maintain-ratio"
+                                type="checkbox"
+                                checked
+                            >
+
+                            <span>
+                                MAINTAIN ASPECT RATIO
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                </section>
+
+
+                <!--CONVERSION ACTION-->
+
+                <section
+                    class="action-panel"
+                    id="action-panel"
+                    hidden
+                >
+
+                    <button
+                        type="button"
+                        class="primary-action"
+                        id="convert-button"
+                        disabled
+                    >
+                        CONVERT IMAGE
+                    </button>
+
+                    <p class="action-note">
+                        PROCESSING HAPPENS LOCALLY IN YOUR BROWSER.
+                    </p>
+
+                </section>
+
+
+                <!--PROGRESS-->
+
+                <section
+                    class="panel progress-panel"
+                    id="progress-panel"
+                    hidden
+                    aria-live="polite"
+                >
+
+                    <div class="panel-header">
+
+                        <span class="panel-index">
+                            04
+                        </span>
+
+                        <h2>PROCESSING</h2>
+
+                    </div>
+
+                    <div class="progress-container">
+
+                        <div class="progress-meta">
+
+                            <span id="progress-status">
+                                PROCESSING
+                            </span>
+
+                            <span id="progress-percentage">
+                                0%
+                            </span>
+
+                        </div>
+
+                        <progress
+                            id="conversion-progress"
+                            value="0"
+                            max="100"
+                        >
+                            0%
+                        </progress>
+
+                    </div>
+
+                </section>
+
+
+                <!--OUTPUT-->
+
+                <section
+                    class="panel output-panel"
+                    id="output-panel"
+                    hidden
+                >
+
+                    <div class="panel-header">
+
+                        <span class="panel-index">
+                            05
+                        </span>
+
+                        <h2>OUTPUT</h2>
+
+                    </div>
+
+                    <div class="output-information">
+
+                        <div
+                            class="output-preview"
+                            id="output-preview"
+                        >
+                        <!-- Converted image preview -->
+                        </div>
+
+                        <div class="output-details">
+
+                            <div class="data-row">
+
+                                <span>FORMAT</span>
+
+                                <strong id="output-format-display">
+                                    —
+                                </strong>
+
+                            </div>
+
+                            <div class="data-row">
+
+                                <span>SIZE</span>
+
+                                <strong id="output-size">
+                                    —
+                                </strong>
+
+                            </div>
+
+                            <div class="data-row">
+
+                                <span>DIMENSIONS</span>
+
+                                <strong id="output-dimensions">
+                                    —
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="output-actions">
+
+                        <button
+                            type="button"
+                            class="primary-action"
+                            id="download-button"
+                            disabled
+                        >
+                            DOWNLOAD
+                        </button>
+
+                        <button
+                            type="button"
+                            class="secondary-action"
+                            id="convert-another-button"
+                        >
+                            CONVERT ANOTHER
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                <!--ERROR-->
+
+                <section
+                    class="error-panel"
+                    id="error-panel"
+                    hidden
+                    role="alert"
+                >
+
+                    <div class="error-marker">
+                        ERROR
+                    </div>
+
+                    <p id="error-message">
+                        Something went wrong.
+                    </p>
+
+                    <button
+                        type="button"
+                        class="secondary-action"
+                        id="dismiss-error-button"
+                    >
+                        DISMISS
+                    </button>
+
+                </section>
+
+            </section>
+
+
+            <!--FOOTER-->
+
+            <footer class="site-footer">
+
+                <p>
+                    YOUR FILES STAY ON YOUR DEVICE.
+                </p>
+
+                <p>
+                    NO SERVER. NO ACCOUNT. NO TRACKING.
+                </p>
+
+                <span class="version">
+                    V1.0.0
+                </span>
+
+            </footer>
+
+        </main>
+
+
+        <!--JAVASCRIPT-->
+
+        <script
+            type="module"
+            src="/js/main.js"
+        ></script>
+
+        </body> </html>    
 
 </html>
