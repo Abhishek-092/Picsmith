@@ -1,580 +1,474 @@
 <!DOCTYPE html>
-<html lang="en"> 
-    <head> 
-        <meta charset="UTF-8">
-        <!--Viewport-->
-        <meta name="viewport" content="width=device-width", initial-scale="1.0">
-        <!-- Primary SEO -->
-        <title>Image Converter: Convert JPG, PNG, WebP, SVG and More</title>
-        <meta name="description" content="A fast, lightweight, privacy-first image converter. Converts JPG, PNG, WebP, SVG, favicon">
-        <meta name="robots" content="index follow">
-        <!-- Theme --> 
-        <meta name="theme-color" content="#000000">
-        <!-- Prevent MIME sniffing --> 
-        <meta http-equiv="X-Content-Type-Options" content="nosniff">
-        <!-- Styles --> 
-        <link rel="stylesheet" href="/css/style.css">
-         <!-- Favicon -->
-        <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml" >
-    </head>
-    <body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PICSMITH // High-Contrast Image Converter (100% Client-Side)</title>
+    <meta name="description" content="Ultra-fast, private, in-browser image converter. Convert JPG, PNG, WebP, AVIF, SVG, ICO and more with zero server uploads.">
+    <meta name="theme-color" content="#e8ff00">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230a0a0a'/><rect x='10' y='10' width='80' height='80' fill='%23e8ff00'/><text x='50' y='68' font-size='56' font-family='sans-serif' font-weight='900' fill='%230a0a0a' text-anchor='middle'>P</text></svg>">
+</head>
+<body>
 
-        <!--APPLICATION SHELL -->
+    <!-- Header ticker -->
+    <div class="ticker-tape" aria-hidden="true">
+        <div class="ticker-track">
+            <div class="ticker-item"><span>PICSMITH v1.0</span> <span class="bullet">★</span> <span>100% BROWSER LOCAL</span> <span class="bullet">★</span> <span>ZERO SERVER UPLOADS</span> <span class="bullet">★</span> <span>HIGH-SPEED CANVAS ENGINE</span> <span class="bullet">★</span> <span>WEBP // AVIF // PNG // JPG // ICO // SVG</span> <span class="bullet">★</span> <span>MAXIMUM PRIVACY GUARANTEED</span> <span class="bullet">★</span> <span>NO TRACKING</span> <span class="bullet">★</span></div>
+            <div class="ticker-item"><span>PICSMITH v1.0</span> <span class="bullet">★</span> <span>100% BROWSER LOCAL</span> <span class="bullet">★</span> <span>ZERO SERVER UPLOADS</span> <span class="bullet">★</span> <span>HIGH-SPEED CANVAS ENGINE</span> <span class="bullet">★</span> <span>WEBP // AVIF // PNG // JPG // ICO // SVG</span> <span class="bullet">★</span> <span>MAXIMUM PRIVACY GUARANTEED</span> <span class="bullet">★</span> <span>NO TRACKING</span> <span class="bullet">★</span></div>
+        </div>
+    </div>
 
-        <main id="app">
+    <!-- Main container -->
+    <main class="app-container" id="app">
 
-            <!-- HEADER -->
+        <!-- Header -->
+        <header class="site-header">
+            <div class="brand-wrapper">
+                <div class="brand-row">
+                    <h1 class="brand-title">PICSMITH</h1>
+                    <span class="sticker-badge">CLIENT-ONLY</span>
+                    <span class="sticker-badge pink">NO-CLOUD</span>
+                </div>
+                <p class="brand-tagline">
+                    FAST / PRIVATE / IN-BROWSER IMAGE PROCESSOR
+                </p>
+            </div>
 
-            <header class="site-header">
+            <div class="header-status-box" id="system-status-box">
+                <span class="status-dot"></span>
+                <div>
+                    <div class="status-label">ENGINE STATUS</div>
+                    <div class="status-val" id="engine-status-text">ONLINE // MEMORY OK</div>
+                </div>
+            </div>
+        </header>
 
-                <div class="brand">
-                    <h1>IMAGE CONVERTER</h1>
-                    <p class="brand-subtitle">
-                        FAST. LOCAL. NO UPLOADS.
-                    </p>
+        <!-- Error notification -->
+        <div class="brutal-error-box hidden" id="error-banner" role="alert">
+            <div class="error-badge">ERROR</div>
+            <div class="error-text" id="error-message">An unexpected issue occurred during processing.</div>
+            <button type="button" class="brutal-btn btn-sm btn-white" id="dismiss-error-btn">DISMISS</button>
+        </div>
+
+        <div class="converter-grid">
+
+            <!-- Step 1: Input -->
+            <section class="brutal-panel" id="panel-input" aria-label="Step 1: Upload Image">
+                <div class="panel-header">
+                    <div class="panel-num">01</div>
+                    <div class="panel-title-group">
+                        <h2 class="panel-title">INPUT IMAGE</h2>
+                        <span class="micro-tracker">SOURCE DISCOVERY</span>
+                    </div>
                 </div>
 
-                <div
-                    class="system-status"
-                    id="system-status"
-                    aria-live="polite"
-                >
-                    <span
-                        class="status-indicator"
-                        aria-hidden="true"
-                    ></span>
+                <div class="panel-body">
+                    <div class="drop-zone-container" id="drop-zone" role="button" tabindex="0" aria-label="Drop zone for image files">
+                        <div class="drop-zone-inner">
+                            <div class="drop-icon-box">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                            </div>
+                            <h3 class="drop-hero-text">DROP IMAGE HERE</h3>
+                            <p class="drop-subtext">OR DRAG FROM DESKTOP / PASTE VIA CLIPBOARD (CTRL+V)</p>
 
-                    <span id="status-text">
-                        READY
-                    </span>
+                            <div class="drop-or-divider">OR</div>
+
+                            <div class="button-row-center">
+                                <label class="brutal-btn btn-acid" for="file-input">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    SELECT FILE
+                                </label>
+                                <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml,image/x-icon,image/bmp,image/gif,image/tiff" class="hidden">
+                                
+                                <button type="button" class="brutal-btn btn-white btn-sm" id="btn-load-sample">
+                                    LOAD DEMO SAMPLE
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="format-ribbon">
+                            <span class="format-chip">JPG / JPEG</span>
+                            <span class="format-chip">PNG</span>
+                            <span class="format-chip">WEBP</span>
+                            <span class="format-chip">AVIF</span>
+                            <span class="format-chip">SVG</span>
+                            <span class="format-chip">ICO / FAVICON</span>
+                            <span class="format-chip">BMP</span>
+                            <span class="format-chip">GIF</span>
+                        </div>
+                    </div>
                 </div>
-
-            </header>
-
-
-            <!--MAIN WORKSPACE-->
-
-            <section
-                class="converter-workspace"
-                aria-label="Image converter"
-            >
-
-                <!--UPLOAD PANEL-->
-
-                <section
-                    class="panel upload-panel"
-                    id="upload-panel"
-                >
-
-                    <div class="panel-header">
-                        <span class="panel-index">01</span>
-
-                        <h2>INPUT</h2>
-                    </div>
-
-                    <div
-                        class="drop-zone"
-                        id="drop-zone"
-                        role="button"
-                        tabindex="0"
-                        aria-label="Upload an image"
-                    >
-
-                        <div class="drop-zone-content">
-
-                            <span
-                                class="drop-zone-label"
-                                aria-hidden="true"
-                            >
-                                DROP IMAGE HERE
-                            </span>
-
-                            <span class="drop-zone-divider">
-                                OR
-                            </span>
-
-                            <label
-                                class="file-select-button"
-                                for="file-input"
-                            >
-                                SELECT FILE
-                            </label>
-
-                            <input
-                                id="file-input"
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml,image/tiff,image/x-icon"
-                                hidden
-                            >
-
-                        </div>
-
-                    </div>
-
-                    <p class="upload-info">
-                        JPG / PNG / WEBP / AVIF / SVG / ICO / TIFF
-                    </p>
-
-                </section>
-
-
-                <!--FILE INFORMATION-->
-
-                <section
-                    class="panel file-panel"
-                    id="file-panel"
-                    hidden
-                >
-
-                    <div class="panel-header">
-                        <span class="panel-index">02</span>
-
-                        <h2>FILE</h2>
-                    </div>
-
-                    <div class="file-information">
-
-                        <div class="file-preview-container">
-
-                            <div
-                                class="file-preview"
-                                id="file-preview"
-                            >
-                                <!-- Preview inserted by JavaScript -->
-                            </div>
-
-                        </div>
-
-                        <div class="file-details">
-
-                            <div class="data-row">
-                                <span>NAME</span>
-                                <strong id="file-name">
-                                    —
-                                </strong>
-                            </div>
-
-                            <div class="data-row">
-                                <span>TYPE</span>
-                                <strong id="file-type">
-                                    —
-                                </strong>
-                            </div>
-
-                            <div class="data-row">
-                                <span>SIZE</span>
-                                <strong id="file-size">
-                                    —
-                                </strong>
-                            </div>
-
-                            <div class="data-row">
-                                <span>DIMENSIONS</span>
-                                <strong id="file-dimensions">
-                                    —
-                                </strong>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <button
-                        type="button"
-                        class="text-button"
-                        id="remove-file-button"
-                    >
-                        REMOVE FILE
-                    </button>
-
-                </section>
-
-
-                <!--CONVERSION SETTINGS-->
-
-                <section
-                    class="panel settings-panel"
-                    id="settings-panel"
-                    hidden
-                >
-
-                    <div class="panel-header">
-                        <span class="panel-index">03</span>
-
-                        <h2>CONVERT</h2>
-                    </div>
-
-
-                    <div class="settings-grid">
-
-                        <!-- INPUT FORMAT -->
-
-                        <div class="setting">
-
-                            <label for="input-format">
-                                FROM
-                            </label>
-
-                            <select
-                                id="input-format"
-                                disabled
-                            >
-                                <option value="">
-                                    AUTO
-                                </option>
-                            </select>
-
-                        </div>
-
-
-                        <!-- OUTPUT FORMAT -->
-
-                        <div class="setting">
-
-                            <label for="output-format">
-                                TO
-                            </label>
-
-                            <select id="output-format">
-
-                                <option value="png">
-                                    PNG
-                                </option>
-
-                                <option value="jpeg">
-                                    JPG
-                                </option>
-
-                                <option value="webp">
-                                    WEBP
-                                </option>
-
-                                <option value="avif">
-                                    AVIF
-                                </option>
-
-                                <option value="ico">
-                                    ICO / FAVICON
-                                </option>
-
-                                <option value="svg">
-                                    SVG
-                                </option>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-
-                    <!--QUALITY-->
-
-                    <div
-                        class="setting quality-setting"
-                        id="quality-setting"
-                    >
-
-                        <div class="setting-label-row">
-
-                            <label for="quality">
-                                QUALITY
-                            </label>
-
-                            <output
-                                id="quality-value"
-                                for="quality"
-                            >
-                                85
-                            </output>
-
-                        </div>
-
-                        <input
-                            id="quality"
-                            type="range"
-                            min="1"
-                            max="100"
-                            value="85"
-                        >
-
-                    </div>
-
-
-                    <!--RESIZE-->
-
-                    <div
-                        class="resize-settings"
-                        id="resize-settings"
-                    >
-
-                        <div class="setting">
-
-                            <label for="output-width">
-                                WIDTH
-                            </label>
-
-                            <input
-                                id="output-width"
-                                type="number"
-                                min="1"
-                                placeholder="AUTO"
-                                inputmode="numeric"
-                            >
-
-                        </div>
-
-                        <div class="setting">
-
-                            <label for="output-height">
-                                HEIGHT
-                            </label>
-
-                            <input
-                                id="output-height"
-                                type="number"
-                                min="1"
-                                placeholder="AUTO"
-                                inputmode="numeric"
-                            >
-
-                        </div>
-
-                        <label class="checkbox-setting">
-
-                            <input
-                                id="maintain-ratio"
-                                type="checkbox"
-                                checked
-                            >
-
-                            <span>
-                                MAINTAIN ASPECT RATIO
-                            </span>
-
-                        </label>
-
-                    </div>
-
-                </section>
-
-
-                <!--CONVERSION ACTION-->
-
-                <section
-                    class="action-panel"
-                    id="action-panel"
-                    hidden
-                >
-
-                    <button
-                        type="button"
-                        class="primary-action"
-                        id="convert-button"
-                        disabled
-                    >
-                        CONVERT IMAGE
-                    </button>
-
-                    <p class="action-note">
-                        PROCESSING HAPPENS LOCALLY IN YOUR BROWSER.
-                    </p>
-
-                </section>
-
-
-                <!--PROGRESS-->
-
-                <section
-                    class="panel progress-panel"
-                    id="progress-panel"
-                    hidden
-                    aria-live="polite"
-                >
-
-                    <div class="panel-header">
-
-                        <span class="panel-index">
-                            04
-                        </span>
-
-                        <h2>PROCESSING</h2>
-
-                    </div>
-
-                    <div class="progress-container">
-
-                        <div class="progress-meta">
-
-                            <span id="progress-status">
-                                PROCESSING
-                            </span>
-
-                            <span id="progress-percentage">
-                                0%
-                            </span>
-
-                        </div>
-
-                        <progress
-                            id="conversion-progress"
-                            value="0"
-                            max="100"
-                        >
-                            0%
-                        </progress>
-
-                    </div>
-
-                </section>
-
-
-                <!--OUTPUT-->
-
-                <section
-                    class="panel output-panel"
-                    id="output-panel"
-                    hidden
-                >
-
-                    <div class="panel-header">
-
-                        <span class="panel-index">
-                            05
-                        </span>
-
-                        <h2>OUTPUT</h2>
-
-                    </div>
-
-                    <div class="output-information">
-
-                        <div
-                            class="output-preview"
-                            id="output-preview"
-                        >
-                        <!-- Converted image preview -->
-                        </div>
-
-                        <div class="output-details">
-
-                            <div class="data-row">
-
-                                <span>FORMAT</span>
-
-                                <strong id="output-format-display">
-                                    —
-                                </strong>
-
-                            </div>
-
-                            <div class="data-row">
-
-                                <span>SIZE</span>
-
-                                <strong id="output-size">
-                                    —
-                                </strong>
-
-                            </div>
-
-                            <div class="data-row">
-
-                                <span>DIMENSIONS</span>
-
-                                <strong id="output-dimensions">
-                                    —
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="output-actions">
-
-                        <button
-                            type="button"
-                            class="primary-action"
-                            id="download-button"
-                            disabled
-                        >
-                            DOWNLOAD
-                        </button>
-
-                        <button
-                            type="button"
-                            class="secondary-action"
-                            id="convert-another-button"
-                        >
-                            CONVERT ANOTHER
-                        </button>
-
-                    </div>
-
-                </section>
-
-
-                <!--ERROR-->
-
-                <section
-                    class="error-panel"
-                    id="error-panel"
-                    hidden
-                    role="alert"
-                >
-
-                    <div class="error-marker">
-                        ERROR
-                    </div>
-
-                    <p id="error-message">
-                        Something went wrong.
-                    </p>
-
-                    <button
-                        type="button"
-                        class="secondary-action"
-                        id="dismiss-error-button"
-                    >
-                        DISMISS
-                    </button>
-
-                </section>
-
             </section>
 
+            <!-- Step 2: Source File Info -->
+            <section class="brutal-panel hidden" id="panel-source-info" aria-label="Step 2: Source File Metrics">
+                <div class="panel-header">
+                    <div class="panel-num blue">02</div>
+                    <div class="panel-title-group">
+                        <h2 class="panel-title">SOURCE METRICS</h2>
+                        <span class="micro-tracker">RAW INSPECTION</span>
+                    </div>
+                </div>
 
-            <!--FOOTER-->
+                <div class="panel-body">
+                    <div class="source-layout">
+                        <!-- Preview -->
+                        <div class="preview-box">
+                            <div class="preview-checkerboard" id="source-preview-container">
+                                <img id="source-preview-img" alt="Source image preview" src="">
+                            </div>
+                            <div class="preview-bar">
+                                <span>SOURCE CANVAS</span>
+                                <span id="source-preview-tag" class="text-acid">ORIGINAL</span>
+                            </div>
+                        </div>
 
-            <footer class="site-footer">
+                        <!-- Details table -->
+                        <div>
+                            <div class="metrics-table">
+                                <div class="metric-row">
+                                    <span class="metric-key">FILE NAME</span>
+                                    <span class="metric-val" id="metric-name">N/A</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-key">MIME / FORMAT</span>
+                                    <span class="metric-val badge" id="metric-type">N/A</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-key">RAW SIZE</span>
+                                    <span class="metric-val" id="metric-size">N/A</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-key">DIMENSIONS</span>
+                                    <span class="metric-val" id="metric-dimensions">N/A</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-key">ASPECT RATIO</span>
+                                    <span class="metric-val" id="metric-aspect">N/A</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-key">MEGAPIXELS</span>
+                                    <span class="metric-val" id="metric-megapixels">N/A</span>
+                                </div>
+                            </div>
 
-                <p>
-                    YOUR FILES STAY ON YOUR DEVICE.
-                </p>
+                            <div class="source-actions-bar">
+                                <button type="button" class="brutal-btn btn-sm btn-pink" id="btn-remove-source">
+                                    REMOVE FILE
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                <p>
-                    NO SERVER. NO ACCOUNT. NO TRACKING.
-                </p>
+            <!-- Step 3: Settings -->
+            <section class="brutal-panel hidden" id="panel-settings" aria-label="Step 3: Conversion Settings">
+                <div class="panel-header">
+                    <div class="panel-num yellow">03</div>
+                    <div class="panel-title-group">
+                        <h2 class="panel-title">CONVERSION CONFIG</h2>
+                        <span class="micro-tracker">PIPELINE ROUTING</span>
+                    </div>
+                </div>
 
-                <span class="version">
-                    V1.0.0
-                </span>
+                <div class="panel-body">
+                    <div class="settings-stack">
 
-            </footer>
+                        <!-- Format choices -->
+                        <div>
+                            <div class="section-eyebrow">TARGET OUTPUT FORMAT</div>
+                            <div class="format-grid" id="format-selector-grid">
+                                <div class="format-card selected" data-format="webp">
+                                    <div class="format-ext">WEBP</div>
+                                    <div class="format-desc">MODERN WEB / COMPACT</div>
+                                </div>
+                                <div class="format-card" data-format="png">
+                                    <div class="format-ext">PNG</div>
+                                    <div class="format-desc">LOSSLESS / ALPHA</div>
+                                </div>
+                                <div class="format-card" data-format="jpeg">
+                                    <div class="format-ext">JPG</div>
+                                    <div class="format-desc">PHOTO / STANDARD</div>
+                                </div>
+                                <div class="format-card" data-format="avif">
+                                    <div class="format-ext">AVIF</div>
+                                    <div class="format-desc">NEXT-GEN ULTRA COMPRESS</div>
+                                </div>
+                                <div class="format-card" data-format="ico">
+                                    <div class="format-ext">ICO</div>
+                                    <div class="format-desc">FAVICON MULTI-RES</div>
+                                </div>
+                                <div class="format-card" data-format="svg">
+                                    <div class="format-ext">SVG</div>
+                                    <div class="format-desc">VECTOR / SCALABLE</div>
+                                </div>
+                            </div>
+                        </div>
 
-        </main>
+                        <!-- Quality and resize -->
+                        <div class="controls-two-col">
 
+                            <!-- Quality slider -->
+                            <div class="control-card" id="card-quality-control">
+                                <div class="control-header-row">
+                                    <span class="control-title">COMPRESSION QUALITY</span>
+                                    <span class="slider-readout" id="quality-val-display">85%</span>
+                                </div>
 
-        <!--JAVASCRIPT-->
+                                <input type="range" class="brutal-range" id="input-quality" min="1" max="100" value="85">
 
-        <script
-            type="module"
-            src="/js/main.js"
-        ></script>
+                                <div class="preset-pills">
+                                    <button type="button" class="preset-pill" data-quality="100">LOSSLESS (100%)</button>
+                                    <button type="button" class="preset-pill active" data-quality="85">BALANCED (85%)</button>
+                                    <button type="button" class="preset-pill" data-quality="70">WEB OPT (70%)</button>
+                                    <button type="button" class="preset-pill" data-quality="50">LOW (50%)</button>
+                                </div>
+                            </div>
 
-        </body> </html>    
+                            <!-- Dimensions -->
+                            <div class="control-card">
+                                <div class="control-header-row">
+                                    <span class="control-title">OUTPUT DIMENSIONS</span>
+                                    <span class="micro-tracker" id="scale-indicator-text">ORIGINAL SCALE</span>
+                                </div>
 
+                                <div class="dim-inputs-grid">
+                                    <div class="input-block">
+                                        <span class="input-label">WIDTH (PX)</span>
+                                        <input type="number" class="brutal-input" id="input-width" placeholder="Auto" min="1">
+                                    </div>
+
+                                    <button type="button" class="dim-link-btn active" id="btn-lock-aspect" title="Lock Aspect Ratio">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <rect x="3" y="11" width="18" height="11" rx="0" ry="0"></rect>
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                        </svg>
+                                    </button>
+
+                                    <div class="input-block">
+                                        <span class="input-label">HEIGHT (PX)</span>
+                                        <input type="number" class="brutal-input" id="input-height" placeholder="Auto" min="1">
+                                    </div>
+                                </div>
+
+                                <div class="preset-pills">
+                                    <button type="button" class="preset-pill" data-scale="0.5">0.5X</button>
+                                    <button type="button" class="preset-pill active" data-scale="1.0">1.0X (RESET)</button>
+                                    <button type="button" class="preset-pill" data-scale="2.0">2.0X</button>
+                                    <button type="button" class="preset-pill" data-preset-size="512">512px</button>
+                                    <button type="button" class="preset-pill" data-preset-size="256">256px</button>
+                                    <button type="button" class="preset-pill" data-preset-size="32">32px (ICO)</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Extra options -->
+                        <div class="extra-options-panel" id="extra-options-panel">
+                            <!-- Matte color for JPG -->
+                            <div class="options-row" id="opt-jpg-matte">
+                                <span class="input-label">TRANSPARENCY MATTE FILL (JPG HAS NO ALPHA):</span>
+                                <div class="color-picker-group">
+                                    <input type="color" class="brutal-color" id="input-matte-color" value="#ffffff">
+                                    <span class="metric-val" id="matte-color-hex">#FFFFFF (WHITE)</span>
+                                </div>
+                            </div>
+
+                            <!-- Favicon sizes -->
+                            <div class="options-row hidden" id="opt-ico-sizes">
+                                <span class="input-label">PACK FAVICON RESOLUTIONS:</span>
+                                <label class="checkbox-row"><input type="checkbox" id="ico-sz-16" checked> 16x16</label>
+                                <label class="checkbox-row"><input type="checkbox" id="ico-sz-32" checked> 32x32 (STANDARD)</label>
+                                <label class="checkbox-row"><input type="checkbox" id="ico-sz-48" checked> 48x48</label>
+                                <label class="checkbox-row"><input type="checkbox" id="ico-sz-64" checked> 64x64</label>
+                            </div>
+
+                            <!-- SVG options -->
+                            <div class="options-row hidden" id="opt-svg-mode">
+                                <span class="input-label">SVG CONVERSION MODE:</span>
+                                <label class="checkbox-row"><input type="radio" name="svg-engine-mode" value="vector-trace" checked> VECTOR PATH TRACING</label>
+                                <label class="checkbox-row"><input type="radio" name="svg-engine-mode" value="embed-raster"> EMBEDDED HIGH-RES VECTOR</label>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 4: Convert -->
+            <section class="hidden" id="panel-action" aria-label="Step 4: Execute Conversion">
+                <div class="action-box" id="action-trigger-box">
+                    <button type="button" class="brutal-btn btn-lg btn-acid action-hero-cta" id="btn-convert-action">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        START CONVERSION
+                    </button>
+                    <p class="action-disclaimer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        CONVERSION PROCESSES 100% IN YOUR BROWSER MEMORY. NO FILE IS SENT TO ANY SERVER.
+                    </p>
+                </div>
+
+                <!-- Progress bar -->
+                <div class="progress-box hidden" id="conversion-progress-box">
+                    <div class="progress-header">
+                        <span id="progress-phase-label">INITIALIZING CONVERSION WORKER...</span>
+                        <span id="progress-phase-percent" class="slider-readout">0%</span>
+                    </div>
+                    <div class="brutal-progress-bar">
+                        <div class="brutal-progress-fill" id="progress-bar-fill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 5: Output -->
+            <section class="brutal-panel featured-yellow hidden" id="panel-output" aria-label="Step 5: Output Artifact">
+                <div class="output-success-banner">
+                    <span>CONVERSION SUCCESSFUL</span>
+                    <span class="savings-badge" id="output-savings-badge">-0% SIZE CHANGE</span>
+                </div>
+
+                <div class="panel-header">
+                    <div class="panel-num pink">05</div>
+                    <div class="panel-title-group">
+                        <h2 class="panel-title">OUTPUT ARTIFACT</h2>
+                        <span class="micro-tracker">READY FOR DOWNLOAD</span>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <div class="output-layout">
+                        <!-- Result preview -->
+                        <div class="preview-box">
+                            <div class="preview-checkerboard" id="output-preview-container">
+                                <img id="output-preview-img" alt="Converted output preview" src="">
+                            </div>
+                            <div class="preview-bar">
+                                <span>CONVERTED ARTIFACT</span>
+                                <span id="output-preview-tag" class="text-acid">TARGET READY</span>
+                            </div>
+                        </div>
+
+                        <!-- Result details -->
+                        <div>
+                            <div class="metrics-table">
+                                <div class="metric-row">
+                                    <span class="metric-key">TARGET FORMAT</span>
+                                    <span class="metric-val badge" id="out-metric-format">N/A</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-key">OUTPUT SIZE</span>
+                                    <span class="metric-val" id="out-metric-size">N/A</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-key">OUTPUT RESOLUTION</span>
+                                    <span class="metric-val" id="out-metric-dimensions">N/A</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-key">ENCODING DURATION</span>
+                                    <span class="metric-val" id="out-metric-time">N/A</span>
+                                </div>
+                            </div>
+
+                            <div class="output-actions-grid">
+                                <a id="btn-download-artifact" class="brutal-btn btn-acid btn-lg" download="converted-image">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="7 10 12 15 17 10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                    DOWNLOAD ARTIFACT
+                                </a>
+
+                                <div class="button-row-center">
+                                    <button type="button" class="brutal-btn btn-blue btn-sm" id="btn-copy-clipboard">
+                                        COPY TO CLIPBOARD
+                                    </button>
+                                    <button type="button" class="brutal-btn btn-white btn-sm" id="btn-convert-another">
+                                        CONVERT ANOTHER
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Architecture info -->
+        <section class="architecture-section" aria-label="System Architecture & Privacy Principles">
+            <div class="section-head">
+                <span class="sticker-badge blue">0-SERVER ARCHITECTURE</span>
+                <h2 class="section-title">ENGINE ARCHITECTURE & SPECS</h2>
+            </div>
+
+            <div class="arch-grid">
+                <div class="arch-card highlight-yellow">
+                    <span class="arch-tag">01 // PRIVACY FIRST</span>
+                    <h3 class="arch-heading">CLIENT-SIDE ROUTER</h3>
+                    <p class="arch-desc">
+                        Image binary data is parsed locally in browser RAM using Canvas and OffscreenCanvas APIs. No data packets ever leave your computer.
+                    </p>
+                </div>
+
+                <div class="arch-card highlight-pink">
+                    <span class="arch-tag">02 // LOW MEMORY</span>
+                    <h3 class="arch-heading">SINGLE-PASS ENCODING</h3>
+                    <p class="arch-desc">
+                        Images are decoded only once, transformed to target pixel dimensions, and directly encoded to avoid duplicate CPU churn and memory leaks.
+                    </p>
+                </div>
+
+                <div class="arch-card highlight-blue">
+                    <span class="arch-tag">03 // ADAPTIVE CODECS</span>
+                    <h3 class="arch-heading">MULTI-ENGINE ROUTER</h3>
+                    <p class="arch-desc">
+                        Standard formats use native hardware acceleration, while Favicon and SVG vector algorithms utilize dedicated client-side tracing routines.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            <div class="footer-manifesto">
+                <p>PICSMITH IMAGE CONVERTER // ZERO SERVER RESIDUE</p>
+                <p>NO CLOUD. NO LOGS. NO TRACKERS.</p>
+            </div>
+            <div class="footer-badges">
+                <span class="format-chip">HTML5 CANVAS</span>
+                <span class="format-chip">OFFSCREEN WORKERS</span>
+                <span class="format-chip">WASM READY</span>
+            </div>
+        </footer>
+
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+
+</body>
 </html>
