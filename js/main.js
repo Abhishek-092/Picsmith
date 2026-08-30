@@ -148,12 +148,12 @@ function init() {
 function setupDragAndDrop() {
     const dropZone = DOM.dropZone;
 
-    function triggerIconTwitch() {
+    function triggerIconRise() {
         const icon = DOM.dropIconBox || document.querySelector('.drop-icon-box');
         if (icon) {
-            icon.classList.remove('twitch');
+            icon.classList.remove('rise');
             void icon.offsetWidth;
-            icon.classList.add('twitch');
+            icon.classList.add('rise');
         }
     }
 
@@ -162,7 +162,7 @@ function setupDragAndDrop() {
             e.preventDefault();
             e.stopPropagation();
             dropZone.classList.add('drag-over');
-            triggerIconTwitch();
+            triggerIconRise();
         });
     });
 
@@ -183,7 +183,7 @@ function setupDragAndDrop() {
     });
 
     dropZone.addEventListener('click', () => {
-        triggerIconTwitch();
+        triggerIconRise();
         DOM.fileInput.click();
     });
 }
