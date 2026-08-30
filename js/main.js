@@ -43,6 +43,7 @@ const DOM = {
     panelOutput: document.getElementById('panel-output'),
     
     dropZone: document.getElementById('drop-zone'),
+    dropIconBox: document.querySelector('.drop-icon-box'),
     fileInput: document.getElementById('file-input'),
     
     sourcePreviewImg: document.getElementById('source-preview-img'),
@@ -147,11 +148,21 @@ function init() {
 function setupDragAndDrop() {
     const dropZone = DOM.dropZone;
 
+    function triggerIconTwitch() {
+        const icon = DOM.dropIconBox || document.querySelector('.drop-icon-box');
+        if (icon) {
+            icon.classList.remove('twitch');
+            void icon.offsetWidth;
+            icon.classList.add('twitch');
+        }
+    }
+
     ['dragenter', 'dragover'].forEach(eventName => {
         dropZone.addEventListener(eventName, (e) => {
             e.preventDefault();
             e.stopPropagation();
             dropZone.classList.add('drag-over');
+            triggerIconTwitch();
         });
     });
 
@@ -172,6 +183,7 @@ function setupDragAndDrop() {
     });
 
     dropZone.addEventListener('click', () => {
+        triggerIconTwitch();
         DOM.fileInput.click();
     });
 }
