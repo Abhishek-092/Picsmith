@@ -397,6 +397,53 @@ button, input, select, textarea {
     display: grid;
     place-items: center;
     margin-bottom: 4px;
+    transition: transform 0.12s ease, background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.drop-zone-container:hover .drop-icon-box {
+    transform: translate(-3px, -3px) rotate(-4deg);
+    box-shadow: var(--shadow-md);
+    background: var(--hot-pink);
+    color: var(--white);
+}
+
+.drop-zone-container:active .drop-icon-box,
+.drop-icon-box.twitch {
+    animation: icon-twitch 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes icon-twitch {
+    0% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+    }
+    15% {
+        transform: translate(-5px, -3px) rotate(-12deg) scale(1.1);
+        background: var(--hot-pink);
+        color: var(--white);
+        box-shadow: 6px 6px 0 0 var(--ink);
+    }
+    30% {
+        transform: translate(5px, 2px) rotate(10deg) scale(1.08);
+        background: var(--sky-blue);
+        color: var(--ink);
+    }
+    45% {
+        transform: translate(-4px, 1px) rotate(-8deg) scale(1.05);
+        background: var(--acid-yellow);
+        color: var(--ink);
+    }
+    65% {
+        transform: translate(3px, -2px) rotate(5deg) scale(1.02);
+    }
+    80% {
+        transform: translate(-1px, 1px) rotate(-2deg) scale(1);
+    }
+    100% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+        background: var(--ink);
+        color: var(--acid-yellow);
+        box-shadow: var(--shadow-sm);
+    }
 }
 
 .drop-icon-box svg {
