@@ -32,7 +32,6 @@ const state = {
 
 // DOM references
 const DOM = {
-    engineStatus: document.getElementById('engine-status-text'),
     errorBanner: document.getElementById('error-banner'),
     errorMessage: document.getElementById('error-message'),
     dismissErrorBtn: document.getElementById('dismiss-error-btn'),
@@ -45,7 +44,6 @@ const DOM = {
     
     dropZone: document.getElementById('drop-zone'),
     fileInput: document.getElementById('file-input'),
-    btnLoadSample: document.getElementById('btn-load-sample'),
     
     sourcePreviewImg: document.getElementById('source-preview-img'),
     metricName: document.getElementById('metric-name'),
@@ -138,13 +136,11 @@ function init() {
     setupDragAndDrop();
     setupFileInput();
     setupClipboardPaste();
-    setupSampleLoader();
     setupSettingsEvents();
     setupConversionAction();
     setupOutputEvents();
 
     DOM.dismissErrorBtn.addEventListener('click', hideError);
-    DOM.engineStatus.textContent = 'READY // HARDWARE ACCELERATED';
 }
 
 // Drag and drop handlers
@@ -175,10 +171,8 @@ function setupDragAndDrop() {
         }
     });
 
-    dropZone.addEventListener('click', (e) => {
-        if (e.target !== DOM.btnLoadSample && !DOM.btnLoadSample.contains(e.target)) {
-            DOM.fileInput.click();
-        }
+    dropZone.addEventListener('click', () => {
+        DOM.fileInput.click();
     });
 }
 
@@ -209,68 +203,7 @@ function setupClipboardPaste() {
     });
 }
 
-// Demo image generator
-function setupSampleLoader() {
-    DOM.btnLoadSample.addEventListener('click', (e) => {
-        e.stopPropagation();
-        createDemoImage();
-    });
-}
 
-function createDemoImage() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1200;
-    canvas.height = 800;
-    const ctx = canvas.getContext('2d');
-
-    // Background
-    ctx.fillStyle = '#f5f3ea';
-    ctx.fillRect(0, 0, 1200, 800);
-
-    // Acid yellow banner
-    ctx.fillStyle = '#e8ff00';
-    ctx.fillRect(60, 60, 1080, 680);
-    ctx.strokeStyle = '#0a0a0a';
-    ctx.lineWidth = 12;
-    ctx.strokeRect(60, 60, 1080, 680);
-
-    // Decorative pink block
-    ctx.fillStyle = '#ff5e8a';
-    ctx.fillRect(120, 120, 360, 240);
-    ctx.strokeRect(120, 120, 360, 240);
-
-    // Accent circle
-    ctx.fillStyle = '#5ec8ff';
-    ctx.beginPath();
-    ctx.arc(880, 240, 120, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // Halftone dots
-    ctx.fillStyle = '#0a0a0a';
-    for (let x = 600; x < 1000; x += 24) {
-        for (let y = 440; y < 680; y += 24) {
-            ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    // Typography
-    ctx.fillStyle = '#0a0a0a';
-    ctx.font = '900 84px Archivo, sans-serif';
-    ctx.fillText('PICSMITH', 120, 480);
-
-    ctx.font = '700 32px "JetBrains Mono", monospace';
-    ctx.fillText('NEO-BRUTALIST DEMO SAMPLE', 120, 550);
-    ctx.font = '700 24px "JetBrains Mono", monospace';
-    ctx.fillText('100% IN-BROWSER IMAGE PROCESSOR', 120, 610);
-
-    canvas.toBlob((blob) => {
-        const file = new File([blob], 'picsmith-demo-sample.png', { type: 'image/png' });
-        handleFileSelection(file);
-    }, 'image/png');
-}
 
 // File loading and metadata inspection
 async function handleFileSelection(file) {
