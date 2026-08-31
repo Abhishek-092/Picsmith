@@ -144,23 +144,50 @@ export class UIController {
     }
 
     calculateEstimatedSize(state) {
-        if (!state.sourceSize || !state.sourceWidth || !state.targetWidth) return;
+        if (!state.sourceWidth || !state.targetWidth) return;
 
-        const scaleX = (state.targetWidth || state.sourceWidth) / state.sourceWidth;
-        const scaleY = (state.targetHeight || state.sourceHeight) / state.sourceHeight;
-        const pixelRatio = scaleX * scaleY;
+        const targetW = state.targetWidth || state.sourceWidth;
+        const targetH = state.targetHeight || state.sourceHeight;
+        const totalPixels = targetW * targetH;
+        const q = state.targetQuality !== undefined ? state.targetQuality : 0.85;
+        const fmt = state.targetFormat;
 
-        let compressionMultiplier = 0.8;
-        if (state.targetFormat === 'webp') compressionMultiplier = state.targetQuality * 0.55;
-        else if (state.targetFormat === 'jpeg') compressionMultiplier = state.targetQuality * 0.7;
-        else if (state.targetFormat === 'avif') compressionMultiplier = state.targetQuality * 0.45;
-        else if (state.targetFormat === 'png') compressionMultiplier = 0.95;
-        else if (state.targetFormat === 'ico') compressionMultiplier = 0.2;
-        else if (state.targetFormat === 'svg') compressionMultiplier = 0.6;
+        let estBytes = 0;
 
-        const estBytes = Math.round(state.sourceSize * pixelRatio * compressionMultiplier);
+        if (fmt === 'png') {
+            // PNG lossless: 0.35 to 1.1 bytes per pixel depending on graphic type
+            const isPhoto = state.sourceType?.includes('jpeg') || state.sourceFormat === 'jpeg';
+            const bpp = isPhoto ? 0.75 : 0.40;
+            estBytes = Math.round(totalPixels * bpp);
+        } else if (fmt === 'webp') {
+            const bpp = 0.03 + (Math.pow(q, 1.8) * 0.24);
+            estBytes = Math.round(totalPixels * bpp);
+        } else if (fmt === 'jpeg') {
+            const bpp = 0.04 + (Math.pow(q, 1.8) * 0.32);
+            estBytes = Math.round(totalPixels * bpp);
+        } else if (fmt === 'avif') {
+            const bpp = 0.02 + (Math.pow(q, 1.8) * 0.16);
+            estBytes = Math.round(totalPixels * bpp);
+        } else if (fmt === 'ico') {
+            const sizes = state.icoSizes || [16, 32, 48, 64];
+            let icoBytes = 6 + (16 * sizes.length);
+            for (const s of sizes) {
+                icoBytes += Math.round(s * s * 0.6) + 64;
+            }
+            estBytes = icoBytes;
+        } else if (fmt === 'svg') {
+            if (state.svgMode === 'vector-trace') {
+                const traceGrid = Math.min(256 * 256, totalPixels);
+                estBytes = Math.round(traceGrid * 0.45 + 1024);
+            } else {
+                estBytes = Math.round(totalPixels * 0.22 * 1.33 + 512);
+            }
+        }
+
         if (this.dom.liveEstSize) {
-            this.dom.liveEstSize.textContent = `~ ${formatBytes(estBytes)} (${state.targetFormat.toUpperCase()})`;
+            const isLosslessExpansion = fmt === 'png' && (state.sourceType?.includes('jpeg') || state.sourceFormat === 'jpeg');
+            const expansionTag = isLosslessExpansion ? ' (LOSSLESS FORMAT)' : '';
+            this.dom.liveEstSize.textContent = `~ ${formatBytes(estBytes)} ${expansionTag}`;
         }
     }
 
