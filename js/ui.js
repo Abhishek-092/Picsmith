@@ -148,44 +148,67 @@ export class UIController {
 
         const targetW = state.targetWidth || state.sourceWidth;
         const targetH = state.targetHeight || state.sourceHeight;
+        const scaleX = targetW / state.sourceWidth;
+        const scaleY = targetH / state.sourceHeight;
+        const pixelRatio = scaleX * scaleY;
         const totalPixels = targetW * targetH;
         const q = state.targetQuality !== undefined ? state.targetQuality : 0.85;
         const fmt = state.targetFormat;
+        const sourceSize = state.sourceSize || 50000;
+        const isSourceLossy = state.sourceType?.includes('jpeg') || state.sourceFormat === 'jpeg' || state.sourceType?.includes('webp') || state.sourceFormat === 'webp';
 
         let estBytes = 0;
 
-        if (fmt === 'png') {
-            // PNG lossless: 0.35 to 1.1 bytes per pixel depending on graphic type
-            const isPhoto = state.sourceType?.includes('jpeg') || state.sourceFormat === 'jpeg';
-            const bpp = isPhoto ? 0.75 : 0.40;
-            estBytes = Math.round(totalPixels * bpp);
-        } else if (fmt === 'webp') {
-            const bpp = 0.03 + (Math.pow(q, 1.8) * 0.24);
-            estBytes = Math.round(totalPixels * bpp);
+        if (fmt === 'webp') {
+            if (isSourceLossy) {
+                // Converting JPG to WebP at 85% yields ~45-55% of original JPEG size
+                const qFactor = Math.pow(q, 1.6);
+                estBytes = Math.round(sourceSize * pixelRatio * (0.15 + (qFactor * 0.42)));
+            } else {
+                const bpp = 0.04 + (Math.pow(q, 1.8) * 0.22);
+                estBytes = Math.round(totalPixels * bpp);
+            }
         } else if (fmt === 'jpeg') {
-            const bpp = 0.04 + (Math.pow(q, 1.8) * 0.32);
-            estBytes = Math.round(totalPixels * bpp);
+            if (isSourceLossy) {
+                const qFactor = Math.pow(q, 1.7);
+                estBytes = Math.round(sourceSize * pixelRatio * (0.3 + (qFactor * 0.65)));
+            } else {
+                const bpp = 0.05 + (Math.pow(q, 1.8) * 0.30);
+                estBytes = Math.round(totalPixels * bpp);
+            }
         } else if (fmt === 'avif') {
-            const bpp = 0.02 + (Math.pow(q, 1.8) * 0.16);
-            estBytes = Math.round(totalPixels * bpp);
+            if (isSourceLossy) {
+                const qFactor = Math.pow(q, 1.6);
+                estBytes = Math.round(sourceSize * pixelRatio * (0.10 + (qFactor * 0.32)));
+            } else {
+                const bpp = 0.02 + (Math.pow(q, 1.8) * 0.15);
+                estBytes = Math.round(totalPixels * bpp);
+            }
+        } else if (fmt === 'png') {
+            if (isSourceLossy) {
+                // Lossless expansion from lossy source
+                estBytes = Math.round(Math.min(totalPixels * 0.7, sourceSize * pixelRatio * 3.8));
+            } else {
+                estBytes = Math.round(sourceSize * pixelRatio);
+            }
         } else if (fmt === 'ico') {
             const sizes = state.icoSizes || [16, 32, 48, 64];
             let icoBytes = 6 + (16 * sizes.length);
             for (const s of sizes) {
-                icoBytes += Math.round(s * s * 0.6) + 64;
+                icoBytes += Math.round(s * s * 0.5) + 40;
             }
             estBytes = icoBytes;
         } else if (fmt === 'svg') {
             if (state.svgMode === 'vector-trace') {
                 const traceGrid = Math.min(256 * 256, totalPixels);
-                estBytes = Math.round(traceGrid * 0.45 + 1024);
+                estBytes = Math.round(traceGrid * 0.35 + 800);
             } else {
-                estBytes = Math.round(totalPixels * 0.22 * 1.33 + 512);
+                estBytes = Math.round(sourceSize * pixelRatio * 1.35 + 400);
             }
         }
 
         if (this.dom.liveEstSize) {
-            const isLosslessExpansion = fmt === 'png' && (state.sourceType?.includes('jpeg') || state.sourceFormat === 'jpeg');
+            const isLosslessExpansion = fmt === 'png' && isSourceLossy;
             const expansionTag = isLosslessExpansion ? ' (LOSSLESS FORMAT)' : '';
             this.dom.liveEstSize.textContent = `~ ${formatBytes(estBytes)} ${expansionTag}`;
         }
