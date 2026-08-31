@@ -7,7 +7,7 @@ self.onmessage = async function (e) {
         try {
             self.postMessage({ id, type: 'PROGRESS', progress: 20, stage: 'DECODING_BITMAP' });
 
-            const { imageBitmap, targetWidth, targetHeight, format, quality, matteColor } = payload;
+            const { imageBitmap, targetWidth, targetHeight, format, quality = 0.75, matteColor } = payload;
 
             self.postMessage({ id, type: 'PROGRESS', progress: 50, stage: 'TRANSFORMING_CANVAS' });
 
@@ -30,7 +30,12 @@ self.onmessage = async function (e) {
             else if (format === 'webp') mimeType = 'image/webp';
             else if (format === 'avif') mimeType = 'image/avif';
 
-            const blob = await canvas.convertToBlob({ type: mimeType, quality });
+            let effectiveQuality = quality;
+            if (effectiveQuality >= 0.98 && (format === 'webp' || format === 'jpeg' || format === 'avif')) {
+                effectiveQuality = 0.94;
+            }
+
+            const blob = await canvas.convertToBlob({ type: mimeType, quality: effectiveQuality });
 
             // Ensure worker did not silently create wrong format
             if (blob.type !== mimeType && mimeType !== 'image/png') {
