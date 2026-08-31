@@ -1,26 +1,15 @@
 // Native browser raster conversion engine
 
 export class NativeRasterEngine {
-    constructor() {
-        this.supportsOffscreen = typeof OffscreenCanvas !== 'undefined';
-    }
-
-    async convert({ imageSource, targetWidth, targetHeight, format, quality, matteColor }) {
+    async convert({ imageSource, targetWidth, targetHeight, format, quality = 0.85, matteColor }) {
         const width = targetWidth;
         const height = targetHeight;
 
-        let canvas;
-        let ctx;
-
-        if (this.supportsOffscreen) {
-            canvas = new OffscreenCanvas(width, height);
-            ctx = canvas.getContext('2d', { willReadFrequently: true });
-        } else {
-            canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            ctx = canvas.getContext('2d', { willReadFrequently: true });
-        }
+        // Use standard DOM canvas for 100% reliable hardware-accelerated codec support
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: false });
 
         // Fill background matte if converting transparent image to JPEG
         if (format === 'jpeg') {
@@ -30,8 +19,6 @@ export class NativeRasterEngine {
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-
-        // Draw image bitmap or HTMLImageElement
         ctx.drawImage(imageSource, 0, 0, width, height);
 
         const mimeType = this.mapFormatToMime(format);
@@ -62,35 +49,60 @@ export class NativeRasterEngine {
         }
     }
 
-    encodeCanvasToBlob(canvas, mimeType, quality) {
-        if (canvas instanceof OffscreenCanvas && typeof canvas.convertToBlob === 'function') {
-            return canvas.convertToBlob({ type: mimeType, quality }).catch(() => {
-                // If AVIF fails in OffscreenCanvas, fallback to WebP
-                if (mimeType === 'image/avif') {
-                    return canvas.convertToBlob({ type: 'image/webp', quality });
-                }
-                return canvas.convertToBlob({ type: 'image/png' });
-            });
+    async encodeCanvasToBlob(canvas, mimeType, quality) {
+        // 1. Try canvas.toBlob with target quality
+        const blob = await new Promise((resolve) => {
+            try {
+                canvas.toBlob(
+                    (b) => resolve(b),
+                    mimeType,
+                    quality
+                );
+            } catch {
+                resolve(null);
+            }
+        });
+
+        // Verify the blob was created with the requested MIME type
+        if (blob && (blob.type === mimeType || (mimeType === 'image/jpeg' && blob.type === 'image/jpeg') || (mimeType === 'image/webp' && blob.type === 'image/webp'))) {
+            return blob;
         }
 
+        // 2. Fallback to toDataURL binary stream if toBlob returned mismatched/null mime
+        try {
+            const dataUrl = canvas.toDataURL(mimeType, quality);
+            if (dataUrl.startsWith(`data:${mimeType}`)) {
+                return this.dataUrlToBlob(dataUrl);
+            }
+        } catch {
+            // Continue to fallback
+        }
+
+        // 3. Fallback for AVIF to WebP if AVIF is unsupported by browser encoder
+        if (mimeType === 'image/avif') {
+            const webpBlob = await new Promise((resolve) => {
+                canvas.toBlob((b) => resolve(b), 'image/webp', quality);
+            });
+            if (webpBlob) return webpBlob;
+        }
+
+        // 4. Last resort PNG
         return new Promise((resolve, reject) => {
-            canvas.toBlob(
-                (blob) => {
-                    if (blob) {
-                        resolve(blob);
-                    } else if (mimeType === 'image/avif') {
-                        // Fallback to WebP if AVIF is unsupported
-                        canvas.toBlob((fallbackBlob) => {
-                            if (fallbackBlob) resolve(fallbackBlob);
-                            else reject(new Error('Canvas blob encoding failed.'));
-                        }, 'image/webp', quality);
-                    } else {
-                        reject(new Error(`Encoding to ${mimeType} is not supported by this browser.`));
-                    }
-                },
-                mimeType,
-                quality
-            );
+            canvas.toBlob((b) => {
+                if (b) resolve(b);
+                else reject(new Error(`Failed to encode canvas to ${mimeType}`));
+            }, 'image/png');
         });
+    }
+
+    dataUrlToBlob(dataUrl) {
+        const parts = dataUrl.split(',');
+        const mime = parts[0].match(/:(.*?);/)[1];
+        const binary = atob(parts[1]);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            array[i] = binary.charCodeAt(i);
+        }
+        return new Blob([array], { type: mime });
     }
 }
