@@ -2,11 +2,13 @@
 
 import { validateImageFile } from './utils/validation.js';
 import { detectFormat } from './format-detector.js';
+import { AdvancedEngine } from './engines/advanced-engine.js';
 
 export class FileManager {
     constructor({ onFileLoaded, onError }) {
         this.onFileLoaded = onFileLoaded;
         this.onError = onError;
+        this.advancedEngine = new AdvancedEngine();
     }
 
     async processFile(file) {
@@ -18,6 +20,32 @@ export class FileManager {
 
         try {
             const formatInfo = await detectFormat(file);
+
+            // Handle TIFF format decoding via AdvancedEngine
+            if (formatInfo.format === 'tiff') {
+                const arrayBuffer = await file.arrayBuffer();
+                const canvas = await this.advancedEngine.parseTiffToCanvas(arrayBuffer);
+                const dataUrl = canvas.toDataURL('image/png');
+
+                const img = new Image();
+                img.onload = () => {
+                    this.onFileLoaded({
+                        file,
+                        image: img,
+                        dataUrl,
+                        name: file.name,
+                        size: file.size,
+                        type: 'image/tiff',
+                        format: 'tiff',
+                        width: canvas.width,
+                        height: canvas.height,
+                        aspectRatio: canvas.width / canvas.height
+                    });
+                };
+                img.src = dataUrl;
+                return;
+            }
+
             const dataUrl = await this.readFileAsDataUrl(file);
 
             const img = new Image();
