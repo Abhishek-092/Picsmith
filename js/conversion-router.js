@@ -55,14 +55,12 @@ export class ConversionRouter {
 
         // 2. SVG output route (vector tracing or embedded vector)
         if (targetFormat === 'svg') {
-            onProgress(40, 'TRACING VECTOR PATHS...');
             const result = await this.svgEngine.rasterToSvg({
                 imageSource: sourceImage,
                 targetWidth,
                 targetHeight,
                 mode: svgMode
-            });
-            onProgress(90, 'FINALIZING SVG MARKUP...');
+            }, onProgress);
             return result;
         }
 
