@@ -1,7 +1,6 @@
-// SVG conversion engine (SVG to Raster & Raster to SVG vector tracing)
+// SVG conversion engine: SVG to Raster & Raster to SVG vector tracing
 
 export class SvgEngine {
-    // Convert SVG input into raster formats (PNG, JPG, WebP)
     async svgToRaster({ svgText, targetWidth, targetHeight, format, quality, matteColor }) {
         const width = targetWidth;
         const height = targetHeight;
@@ -43,7 +42,6 @@ export class SvgEngine {
         };
     }
 
-    // Convert Raster input into SVG
     async rasterToSvg({ imageSource, targetWidth, targetHeight, mode = 'vector-trace' }) {
         const width = targetWidth;
         const height = targetHeight;
@@ -56,44 +54,61 @@ export class SvgEngine {
 
         let svgContent = '';
 
-        if (mode === 'vector-trace' && width <= 400 && height <= 400) {
-            // Group horizontal pixels of identical color into SVG rectangles
+        if (mode === 'vector-trace' && width <= 600 && height <= 600) {
+            // Quantized path vectorizer
             const imgData = ctx.getImageData(0, 0, width, height);
             const pixels = imgData.data;
 
-            svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">\n`;
-            svgContent += `<!-- PICSMITH Vector Trace Output -->\n`;
+            // Map color groups to SVG path definitions
+            const colorPaths = new Map();
+
+            // Quantize colors (step by 16 to reduce SVG path count)
+            const quantize = (val) => Math.round(val / 16) * 16;
 
             for (let y = 0; y < height; y++) {
                 let startX = 0;
-                let curColor = null;
+                let curKey = null;
 
                 for (let x = 0; x < width; x++) {
                     const idx = (y * width + x) * 4;
-                    const r = pixels[idx];
-                    const g = pixels[idx + 1];
-                    const b = pixels[idx + 2];
-                    const a = pixels[idx + 3] / 255;
+                    const a = pixels[idx + 3];
 
-                    const color = a > 0.05 ? `rgba(${r},${g},${b},${a.toFixed(2)})` : null;
-
-                    if (color !== curColor) {
-                        if (curColor && (x - startX) > 0) {
-                            svgContent += `<rect x="${startX}" y="${y}" width="${x - startX}" height="1" fill="${curColor}" />\n`;
+                    if (a < 15) {
+                        if (curKey && (x - startX) > 0) {
+                            this.appendRectToMap(colorPaths, curKey, startX, y, x - startX, 1);
                         }
-                        curColor = color;
+                        curKey = null;
+                        continue;
+                    }
+
+                    const r = quantize(pixels[idx]);
+                    const g = quantize(pixels[idx + 1]);
+                    const b = quantize(pixels[idx + 2]);
+                    const key = `rgb(${r},${g},${b})`;
+
+                    if (key !== curKey) {
+                        if (curKey && (x - startX) > 0) {
+                            this.appendRectToMap(colorPaths, curKey, startX, y, x - startX, 1);
+                        }
+                        curKey = key;
                         startX = x;
                     }
                 }
 
-                if (curColor && (width - startX) > 0) {
-                    svgContent += `<rect x="${startX}" y="${y}" width="${width - startX}" height="1" fill="${curColor}" />\n`;
+                if (curKey && (width - startX) > 0) {
+                    this.appendRectToMap(colorPaths, curKey, startX, y, width - startX, 1);
                 }
+            }
+
+            svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">\n`;
+            svgContent += `<!-- PICSMITH Quantized Vector Output -->\n`;
+
+            for (const [color, pathData] of colorPaths.entries()) {
+                svgContent += `<path d="${pathData}" fill="${color}" shape-rendering="crispEdges" />\n`;
             }
 
             svgContent += `</svg>`;
         } else {
-            // High fidelity embedded raster container
             const dataUrl = canvas.toDataURL('image/png');
             svgContent = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
@@ -110,5 +125,14 @@ export class SvgEngine {
             height,
             format: 'svg'
         };
+    }
+
+    appendRectToMap(map, colorKey, x, y, w, h) {
+        const cmd = `M${x} ${y}h${w}v${h}h-${w}z `;
+        if (!map.has(colorKey)) {
+            map.set(colorKey, cmd);
+        } else {
+            map.set(colorKey, map.get(colorKey) + cmd);
+        }
     }
 }
