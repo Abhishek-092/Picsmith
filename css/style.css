@@ -994,6 +994,21 @@ button, input, select, textarea {
     cursor: pointer;
 }
 
+/* Estimation strip */
+.estimation-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--paper);
+    border: var(--border-sm);
+}
+
+.compare-toggle-box {
+    display: flex;
+    gap: 4px;
+}
+
 /* Extra options */
 .extra-options-panel {
     border: var(--border-md);
