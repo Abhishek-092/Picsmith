@@ -55,14 +55,18 @@ export class SvgEngine {
         let svgContent = '';
 
         if (mode === 'vector-trace' && width <= 600 && height <= 600) {
-            // Quantized path vectorizer
-            const imgData = ctx.getImageData(0, 0, width, height);
+            let imgData = ctx.getImageData(0, 0, width, height);
+
+            // Attempt hardware-accelerated quantization via WebAssembly
+            try {
+                const { quantizePixelsWasm } = await import('../../wasm/codecs/pixel-transformer.js');
+                imgData = await quantizePixelsWasm(imgData, 16);
+            } catch {
+                // Fallback to JS quantization
+            }
+
             const pixels = imgData.data;
-
-            // Map color groups to SVG path definitions
             const colorPaths = new Map();
-
-            // Quantize colors (step by 16 to reduce SVG path count)
             const quantize = (val) => Math.round(val / 16) * 16;
 
             for (let y = 0; y < height; y++) {
