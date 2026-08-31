@@ -15,7 +15,7 @@ const initialState = {
     
     // Target conversion settings
     targetFormat: 'webp',
-    targetQuality: 0.85,
+    targetQuality: 0.75,
     targetWidth: 0,
     targetHeight: 0,
     aspectLocked: true,
