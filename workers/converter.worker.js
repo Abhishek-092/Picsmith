@@ -11,9 +11,8 @@ self.onmessage = async function (e) {
 
             self.postMessage({ id, type: 'PROGRESS', progress: 50, stage: 'TRANSFORMING_CANVAS' });
 
-            // Create offscreen canvas
             const canvas = new OffscreenCanvas(targetWidth, targetHeight);
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const ctx = canvas.getContext('2d', { willReadFrequently: false });
 
             if (format === 'jpeg') {
                 ctx.fillStyle = matteColor || '#ffffff';
@@ -31,12 +30,11 @@ self.onmessage = async function (e) {
             else if (format === 'webp') mimeType = 'image/webp';
             else if (format === 'avif') mimeType = 'image/avif';
 
-            let blob;
-            try {
-                blob = await canvas.convertToBlob({ type: mimeType, quality });
-            } catch {
-                // Fallback for formats not supported in worker OffscreenCanvas
-                blob = await canvas.convertToBlob({ type: 'image/png' });
+            const blob = await canvas.convertToBlob({ type: mimeType, quality });
+
+            // Ensure worker did not silently create wrong format
+            if (blob.type !== mimeType && mimeType !== 'image/png') {
+                throw new Error(`Worker OffscreenCanvas does not support encoding ${mimeType}`);
             }
 
             self.postMessage({
