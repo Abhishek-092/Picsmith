@@ -46,40 +46,59 @@ export class SvgEngine {
         const width = targetWidth;
         const height = targetHeight;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(imageSource, 0, 0, width, height);
-
         let svgContent = '';
 
-        if (mode === 'vector-trace' && width <= 600 && height <= 600) {
-            let imgData = ctx.getImageData(0, 0, width, height);
+        if (mode === 'vector-trace') {
+            // Downsample trace grid to max 256px to keep vector XML compact
+            const maxTraceDim = 256;
+            let traceW = width;
+            let traceH = height;
+            if (traceW > maxTraceDim || traceH > maxTraceDim) {
+                if (traceW >= traceH) {
+                    traceH = Math.max(1, Math.round((traceH / traceW) * maxTraceDim));
+                    traceW = maxTraceDim;
+                } else {
+                    traceW = Math.max(1, Math.round((traceW / traceH) * maxTraceDim));
+                    traceH = maxTraceDim;
+                }
+            }
 
-            // Attempt hardware-accelerated quantization via WebAssembly
+            const canvas = document.createElement('canvas');
+            canvas.width = traceW;
+            canvas.height = traceH;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'medium';
+            ctx.drawImage(imageSource, 0, 0, traceW, traceH);
+
+            let imgData = ctx.getImageData(0, 0, traceW, traceH);
+
+            // Attempt WASM quantization
             try {
                 const { quantizePixelsWasm } = await import('../../wasm/codecs/pixel-transformer.js');
-                imgData = await quantizePixelsWasm(imgData, 16);
+                imgData = await quantizePixelsWasm(imgData, 24);
             } catch {
-                // Fallback to JS quantization
+                // Fallback
             }
 
             const pixels = imgData.data;
             const colorPaths = new Map();
-            const quantize = (val) => Math.round(val / 16) * 16;
+            const quantize = (val) => Math.round(val / 24) * 24;
 
-            for (let y = 0; y < height; y++) {
+            const scaleX = width / traceW;
+            const scaleY = height / traceH;
+
+            for (let y = 0; y < traceH; y++) {
                 let startX = 0;
                 let curKey = null;
 
-                for (let x = 0; x < width; x++) {
-                    const idx = (y * width + x) * 4;
+                for (let x = 0; x < traceW; x++) {
+                    const idx = (y * traceW + x) * 4;
                     const a = pixels[idx + 3];
 
-                    if (a < 15) {
+                    if (a < 20) {
                         if (curKey && (x - startX) > 0) {
-                            this.appendRectToMap(colorPaths, curKey, startX, y, x - startX, 1);
+                            this.appendScaledRect(colorPaths, curKey, startX, y, x - startX, 1, scaleX, scaleY);
                         }
                         curKey = null;
                         continue;
@@ -92,20 +111,20 @@ export class SvgEngine {
 
                     if (key !== curKey) {
                         if (curKey && (x - startX) > 0) {
-                            this.appendRectToMap(colorPaths, curKey, startX, y, x - startX, 1);
+                            this.appendScaledRect(colorPaths, curKey, startX, y, x - startX, 1, scaleX, scaleY);
                         }
                         curKey = key;
                         startX = x;
                     }
                 }
 
-                if (curKey && (width - startX) > 0) {
-                    this.appendRectToMap(colorPaths, curKey, startX, y, width - startX, 1);
+                if (curKey && (traceW - startX) > 0) {
+                    this.appendScaledRect(colorPaths, curKey, startX, y, traceW - startX, 1, scaleX, scaleY);
                 }
             }
 
             svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">\n`;
-            svgContent += `<!-- PICSMITH Quantized Vector Output -->\n`;
+            svgContent += `<!-- PICSMITH Optimized Vector Output -->\n`;
 
             for (const [color, pathData] of colorPaths.entries()) {
                 svgContent += `<path d="${pathData}" fill="${color}" shape-rendering="crispEdges" />\n`;
@@ -113,7 +132,24 @@ export class SvgEngine {
 
             svgContent += `</svg>`;
         } else {
-            const dataUrl = canvas.toDataURL('image/png');
+            // High fidelity embedded container
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imageSource, 0, 0, width, height);
+
+            // Use WebP if supported for smaller embedded payload, fallback to PNG
+            let dataUrl;
+            try {
+                dataUrl = canvas.toDataURL('image/webp', 0.9);
+                if (!dataUrl.startsWith('data:image/webp')) {
+                    dataUrl = canvas.toDataURL('image/png');
+                }
+            } catch {
+                dataUrl = canvas.toDataURL('image/png');
+            }
+
             svgContent = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
   <!-- PICSMITH High-Res SVG Container -->
@@ -131,8 +167,13 @@ export class SvgEngine {
         };
     }
 
-    appendRectToMap(map, colorKey, x, y, w, h) {
-        const cmd = `M${x} ${y}h${w}v${h}h-${w}z `;
+    appendScaledRect(map, colorKey, x, y, w, h, sx, sy) {
+        const rx = +(x * sx).toFixed(1);
+        const ry = +(y * sy).toFixed(1);
+        const rw = +(w * sx).toFixed(1);
+        const rh = +(h * sy).toFixed(1);
+        const cmd = `M${rx} ${ry}h${rw}v${rh}h-${rw}z `;
+
         if (!map.has(colorKey)) {
             map.set(colorKey, cmd);
         } else {
