@@ -266,6 +266,12 @@
                             </div>
                         </div>
 
+                        <!-- Live Estimation Strip -->
+                        <div class="estimation-strip">
+                            <span class="input-label">ESTIMATED OUTPUT FOOTPRINT:</span>
+                            <span class="metric-val badge" id="live-est-size">~ CALCULATING</span>
+                        </div>
+
                         <!-- Extra options -->
                         <div class="extra-options-panel" id="extra-options-panel">
                             <!-- Matte color for JPG -->
@@ -340,7 +346,10 @@
                     <div class="panel-num pink">05</div>
                     <div class="panel-title-group">
                         <h2 class="panel-title">OUTPUT ARTIFACT</h2>
-                        <span class="micro-tracker">READY FOR DOWNLOAD</span>
+                        <div class="compare-toggle-box">
+                            <button type="button" class="preset-pill active" id="btn-view-output">OUTPUT</button>
+                            <button type="button" class="preset-pill" id="btn-view-original">ORIGINAL</button>
+                        </div>
                     </div>
                 </div>
 
@@ -352,7 +361,7 @@
                                 <img id="output-preview-img" alt="Converted output preview" src="">
                             </div>
                             <div class="preview-bar">
-                                <span>CONVERTED ARTIFACT</span>
+                                <span>ARTIFACT CANVAS</span>
                                 <span id="output-preview-tag" class="text-acid">TARGET READY</span>
                             </div>
                         </div>
