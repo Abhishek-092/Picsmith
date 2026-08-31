@@ -1,7 +1,7 @@
 // Native browser raster conversion engine
 
 export class NativeRasterEngine {
-    async convert({ imageSource, targetWidth, targetHeight, format, quality = 0.85, matteColor }) {
+    async convert({ imageSource, targetWidth, targetHeight, format, quality = 0.75, matteColor }) {
         const width = targetWidth;
         const height = targetHeight;
 
@@ -21,8 +21,14 @@ export class NativeRasterEngine {
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(imageSource, 0, 0, width, height);
 
+        // Cap lossy formats at 0.94 at 100% slider to avoid exponential lossless entropy explosion
+        let effectiveQuality = quality;
+        if (effectiveQuality >= 0.98 && (format === 'webp' || format === 'jpeg' || format === 'avif')) {
+            effectiveQuality = 0.94;
+        }
+
         const mimeType = this.mapFormatToMime(format);
-        const blob = await this.encodeCanvasToBlob(canvas, mimeType, quality);
+        const blob = await this.encodeCanvasToBlob(canvas, mimeType, effectiveQuality);
 
         return {
             blob,
