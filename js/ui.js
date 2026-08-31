@@ -1,4 +1,4 @@
-// UI Controller managing DOM interactions and view updates
+// UI Controller managing DOM interactions, estimation and view updates
 
 import { formatBytes, calculateAspectRatio, generateOutputFilename } from './utils/filename.js';
 
@@ -40,6 +40,7 @@ export class UIController {
             scaleIndicatorText: document.getElementById('scale-indicator-text'),
             dimPresets: document.querySelectorAll('[data-scale], [data-preset-size]'),
             
+            liveEstSize: document.getElementById('live-est-size'),
             optJpgMatte: document.getElementById('opt-jpg-matte'),
             inputMatteColor: document.getElementById('input-matte-color'),
             matteColorHex: document.getElementById('matte-color-hex'),
@@ -61,6 +62,9 @@ export class UIController {
             
             outputSavingsBadge: document.getElementById('output-savings-badge'),
             outputPreviewImg: document.getElementById('output-preview-img'),
+            outputPreviewTag: document.getElementById('output-preview-tag'),
+            btnViewOutput: document.getElementById('btn-view-output'),
+            btnViewOriginal: document.getElementById('btn-view-original'),
             outMetricFormat: document.getElementById('out-metric-format'),
             outMetricSize: document.getElementById('out-metric-size'),
             outMetricDimensions: document.getElementById('out-metric-dimensions'),
@@ -135,6 +139,29 @@ export class UIController {
             const ratio = (state.targetWidth / state.sourceWidth).toFixed(2);
             this.dom.scaleIndicatorText.textContent = ratio === '1.00' ? 'ORIGINAL SCALE (1.0X)' : `SCALED (${ratio}X)`;
         }
+
+        this.calculateEstimatedSize(state);
+    }
+
+    calculateEstimatedSize(state) {
+        if (!state.sourceSize || !state.sourceWidth || !state.targetWidth) return;
+
+        const scaleX = (state.targetWidth || state.sourceWidth) / state.sourceWidth;
+        const scaleY = (state.targetHeight || state.sourceHeight) / state.sourceHeight;
+        const pixelRatio = scaleX * scaleY;
+
+        let compressionMultiplier = 0.8;
+        if (state.targetFormat === 'webp') compressionMultiplier = state.targetQuality * 0.55;
+        else if (state.targetFormat === 'jpeg') compressionMultiplier = state.targetQuality * 0.7;
+        else if (state.targetFormat === 'avif') compressionMultiplier = state.targetQuality * 0.45;
+        else if (state.targetFormat === 'png') compressionMultiplier = 0.95;
+        else if (state.targetFormat === 'ico') compressionMultiplier = 0.2;
+        else if (state.targetFormat === 'svg') compressionMultiplier = 0.6;
+
+        const estBytes = Math.round(state.sourceSize * pixelRatio * compressionMultiplier);
+        if (this.dom.liveEstSize) {
+            this.dom.liveEstSize.textContent = `~ ${formatBytes(estBytes)} (${state.targetFormat.toUpperCase()})`;
+        }
     }
 
     setProgress(percent, label) {
@@ -152,6 +179,10 @@ export class UIController {
 
     renderOutputArtifact(state) {
         this.dom.outputPreviewImg.src = state.outputUrl;
+        this.dom.outputPreviewTag.textContent = 'TARGET READY';
+        this.dom.btnViewOutput?.classList.add('active');
+        this.dom.btnViewOriginal?.classList.remove('active');
+
         this.dom.outMetricFormat.textContent = state.targetFormat.toUpperCase();
         this.dom.outMetricSize.textContent = formatBytes(state.outputSize);
         this.dom.outMetricDimensions.textContent = `${state.outputWidth} × ${state.outputHeight} PX`;
@@ -178,6 +209,20 @@ export class UIController {
 
         this.dom.panelOutput.classList.remove('hidden');
         this.dom.panelOutput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    setComparisonView(mode, state) {
+        if (mode === 'original') {
+            this.dom.outputPreviewImg.src = state.sourceDataUrl;
+            this.dom.outputPreviewTag.textContent = 'ORIGINAL SOURCE';
+            this.dom.btnViewOriginal?.classList.add('active');
+            this.dom.btnViewOutput?.classList.remove('active');
+        } else {
+            this.dom.outputPreviewImg.src = state.outputUrl;
+            this.dom.outputPreviewTag.textContent = 'CONVERTED TARGET';
+            this.dom.btnViewOutput?.classList.add('active');
+            this.dom.btnViewOriginal?.classList.remove('active');
+        }
     }
 
     resetView() {
