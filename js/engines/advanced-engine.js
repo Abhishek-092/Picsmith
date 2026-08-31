@@ -14,14 +14,18 @@ export class AdvancedEngine {
             return this.loadedCodecs.get(codecName);
         }
 
-        const codec = {
-            name: codecName,
-            ready: true,
-            decode: async (buffer) => buffer,
-            encode: async (imageData, quality) => imageData
-        };
-        this.loadedCodecs.set(codecName, codec);
-        return codec;
+        try {
+            const { quantizePixelsWasm } = await import('../../wasm/codecs/pixel-transformer.js');
+            const codec = {
+                name: codecName,
+                ready: true,
+                quantize: quantizePixelsWasm
+            };
+            this.loadedCodecs.set(codecName, codec);
+            return codec;
+        } catch {
+            return null;
+        }
     }
 
     // Binary TIFF parser for browser decoding (supports uncompressed & PackBits RGB/Grayscale TIFFs)
