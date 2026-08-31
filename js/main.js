@@ -293,6 +293,14 @@ class App {
             }
         });
 
+        dom.btnViewOutput?.addEventListener('click', () => {
+            this.ui.setComparisonView('output', store.get());
+        });
+
+        dom.btnViewOriginal?.addEventListener('click', () => {
+            this.ui.setComparisonView('original', store.get());
+        });
+
         dom.btnConvertAnother.addEventListener('click', () => {
             dom.panelOutput.classList.add('hidden');
             dom.panelInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
