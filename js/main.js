@@ -58,6 +58,16 @@ class App {
 
         this.ui.renderSourceMetrics(store.get());
         this.ui.updateSettingsUI(store.get());
+
+        // Validate if current target format is valid for the loaded image
+        const isTargetValid = this.ui.updateFormatAvailability(store.get());
+        if (!isTargetValid) {
+            store.set({ targetFormat: 'webp' });
+            this.ui.dom.formatCards.forEach(c => {
+                c.classList.toggle('selected', c.dataset.format === 'webp');
+            });
+            this.ui.updateSettingsUI(store.get());
+        }
     }
 
     setupSettingsListeners() {
@@ -66,6 +76,8 @@ class App {
         // Format selector cards
         dom.formatCards.forEach(card => {
             card.addEventListener('click', () => {
+                if (card.classList.contains('disabled')) return;
+
                 dom.formatCards.forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
 
