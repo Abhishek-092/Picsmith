@@ -794,6 +794,35 @@ button, input, select, textarea {
     border: 1px solid var(--ink);
 }
 
+.format-card.disabled {
+    opacity: 0.35;
+    background: #d8d6ce !important;
+    border-color: #888 !important;
+    color: #777 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: 2px 2px 0 0 #aaa !important;
+    pointer-events: none;
+}
+
+.format-card.disabled .format-desc {
+    color: #888;
+}
+
+.format-card.disabled::after {
+    content: "UNSUPPORTED";
+    position: absolute;
+    top: -9px;
+    right: 6px;
+    background: #666;
+    color: var(--white);
+    font-size: 0.5625rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 1px 5px;
+    border: 1px solid #444;
+}
+
 .format-ext {
     font-family: var(--font-display);
     font-weight: 900;
