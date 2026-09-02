@@ -1,0 +1,22 @@
+{
+  "name": "picsmith",
+  "version": "1.0.0",
+  "description": "Fast, private, client-only in-browser image processor and converter",
+  "type": "module",
+  "scripts": {
+    "dev": "npx -y serve . -l 5173",
+    "start": "npx -y serve . -l 5173",
+    "build:wasm": "node build-wasm.js"
+  },
+  "keywords": [
+    "image-converter",
+    "webp",
+    "avif",
+    "svg",
+    "ico",
+    "wasm",
+    "client-side"
+  ],
+  "author": "",
+  "license": "MIT"
+}
