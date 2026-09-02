@@ -1,6 +1,10 @@
 // Script to generate valid standalone WebAssembly binaries for Picsmith WASM modules
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Helper to encode unsigned LEB128
 function encodeLEB128(value) {
@@ -17,20 +21,6 @@ function encodeLEB128(value) {
 }
 
 // 1. Generate pixel-transformer.wasm
-// Valid WASM binary module exporting 'memory' and 'quantize(length, step)'
-// (func $quantize (param $len i32) (param $step i32)
-//   (local $i i32)
-//   (loop $loop
-//     (if (i32.lt_u (local.get $i) (local.get $len))
-//       (then
-//         (i32.store8 (local.get $i) 
-//           (i32.mul (i32.div_u (i32.load8_u (local.get $i)) (local.get $step)) (local.get $step)))
-//         (local.set $i (i32.add (local.get $i) (i32.const 1)))
-//         (br $loop)
-//       )
-//     )
-//   )
-// )
 const wasmHeader = [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
 
 // Type section: (i32, i32) -> ()
@@ -115,8 +105,6 @@ fs.writeFileSync(path.join(__dirname, 'wasm/codecs/pixel-transformer.wasm'), pix
 console.log('Created wasm/codecs/pixel-transformer.wasm (' + pixelTransformerWasm.length + ' bytes)');
 
 // 2. Generate edge-tracer.wasm
-// Exports 'memory' and 'detectEdges(width, height, threshold)'
-// Computes thresholded pixel map in WASM linear memory
 const edgeFuncExportSection = [
     0x07, // section code
     0x17, // section size
