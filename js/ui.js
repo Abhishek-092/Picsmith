@@ -140,7 +140,51 @@ export class UIController {
             this.dom.scaleIndicatorText.textContent = ratio === '1.00' ? 'ORIGINAL SCALE (1.0X)' : `SCALED (${ratio}X)`;
         }
 
+        this.updateFormatAvailability(state);
         this.calculateEstimatedSize(state);
+    }
+
+    updateFormatAvailability(state) {
+        const sourceFmt = state.sourceFormat;
+        const isAvifEncodable = this.checkAvifEncodingSupport();
+        let isCurrentTargetValid = true;
+
+        this.dom.formatCards.forEach(card => {
+            const fmt = card.dataset.format;
+            let isSupported = true;
+
+            // AVIF browser encoder support
+            if (fmt === 'avif' && !isAvifEncodable) {
+                isSupported = false;
+            }
+
+            // SVG to SVG is redundant / not a valid conversion
+            if (sourceFmt === 'svg' && fmt === 'svg') {
+                isSupported = false;
+            }
+
+            card.classList.toggle('disabled', !isSupported);
+
+            if (state.targetFormat === fmt && !isSupported) {
+                isCurrentTargetValid = false;
+            }
+        });
+
+        return isCurrentTargetValid;
+    }
+
+    checkAvifEncodingSupport() {
+        if (this._avifSupported !== undefined) return this._avifSupported;
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 1;
+            const dataUrl = canvas.toDataURL('image/avif');
+            this._avifSupported = dataUrl.startsWith('data:image/avif');
+        } catch {
+            this._avifSupported = false;
+        }
+        return this._avifSupported;
     }
 
     calculateEstimatedSize(state) {
