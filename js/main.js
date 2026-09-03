@@ -62,9 +62,11 @@ class App {
         // Validate if current target format is valid for the loaded image
         const isTargetValid = this.ui.updateFormatAvailability(store.get());
         if (!isTargetValid) {
-            store.set({ targetFormat: 'webp' });
+            const availableCard = Array.from(this.ui.dom.formatCards).find(c => !c.classList.contains('disabled'));
+            const fallbackFormat = availableCard ? availableCard.dataset.format : 'png';
+            store.set({ targetFormat: fallbackFormat });
             this.ui.dom.formatCards.forEach(c => {
-                c.classList.toggle('selected', c.dataset.format === 'webp');
+                c.classList.toggle('selected', c.dataset.format === fallbackFormat);
             });
             this.ui.updateSettingsUI(store.get());
         }
