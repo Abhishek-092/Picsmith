@@ -321,6 +321,8 @@ export class UIController {
 
     resetView() {
         this.dom.fileInput.value = '';
+        this.dom.sourcePreviewImg.src = '';
+        this.dom.outputPreviewImg.src = '';
         this.dom.panelSourceInfo.classList.add('hidden');
         this.dom.panelSettings.classList.add('hidden');
         this.dom.panelAction.classList.add('hidden');
