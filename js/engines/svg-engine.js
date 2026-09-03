@@ -1,4 +1,4 @@
-// Comprehensive SVG conversion engine: SVG to Raster & True Contour Vector Path Tracing
+// Comprehensive SVG conversion engine: SVG to Raster & Smooth Bézier Contour Vector Tracing
 
 export class SvgEngine {
     // 1. Convert SVG to Raster (PNG, JPG, WebP)
@@ -35,6 +35,9 @@ export class SvgEngine {
         const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
         const outputBlob = await new Promise(r => canvas.toBlob(r, mime, quality));
 
+        canvas.width = 0;
+        canvas.height = 0;
+
         return {
             blob: outputBlob,
             width,
@@ -43,7 +46,7 @@ export class SvgEngine {
         };
     }
 
-    // 2. Convert Raster to SVG with true Multi-Pass Contour Vectorization & Simplification
+    // 2. Convert Raster to SVG with Multi-Pass Bézier Curve Vector Tracing
     async rasterToSvg({ imageSource, targetWidth, targetHeight, mode = 'vector-trace' }, onProgress = () => {}) {
         const width = targetWidth;
         const height = targetHeight;
@@ -72,6 +75,9 @@ export class SvgEngine {
   <image width="${width}" height="${height}" xlink:href="${dataUrl}" />
 </svg>`;
 
+            canvas.width = 0;
+            canvas.height = 0;
+
             return {
                 blob: new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' }),
                 width,
@@ -80,12 +86,11 @@ export class SvgEngine {
             };
         }
 
-        // True Contour Vector Path Tracing
-        onProgress(20, 'SAMPLING COLOR CLUSTERS...');
-        await this.delay(30);
+        // True Smooth Bézier Contour Vector Tracing
+        onProgress(15, 'SAMPLING COLOR CLUSTERS...');
+        await this.delay(20);
 
-        // Optimal vector trace resolution
-        const maxDim = 384;
+        const maxDim = 320;
         let traceW = width;
         let traceH = height;
         if (traceW > maxDim || traceH > maxDim) {
@@ -109,10 +114,10 @@ export class SvgEngine {
         const imgData = ctx.getImageData(0, 0, traceW, traceH);
         const pixels = imgData.data;
 
-        onProgress(40, 'EXTRACTING BOUNDARY CONTOURS...');
-        await this.delay(40);
+        onProgress(35, 'DETECTING CONTOUR BOUNDARIES...');
+        await this.delay(30);
 
-        // Color quantization to discrete palette bins (16 levels)
+        // Quantize colors into palette buckets (step of 32 for clean vector posterization)
         const quantizeStep = 32;
         const colorBuckets = new Map();
 
@@ -134,28 +139,39 @@ export class SvgEngine {
             }
         }
 
-        onProgress(65, 'SIMPLIFYING VECTOR CURVES & POLYGONS...');
-        await this.delay(50);
+        onProgress(60, 'FITTING SMOOTH BÉZIER SPLINES...');
+        await this.delay(40);
 
         const scaleX = width / traceW;
         const scaleY = height / traceH;
         let svgPaths = '';
 
-        // Extract and trace boundary polygons for each color layer
+        // Extract boundary polygon contours and fit Bézier splines
         for (const [color, mask] of colorBuckets.entries()) {
-            const pathData = this.traceLayerContours(mask, traceW, traceH, scaleX, scaleY);
-            if (pathData) {
-                svgPaths += `  <path d="${pathData}" fill="${color}" fill-rule="evenodd" />\n`;
+            const loops = this.extractContourLoops(mask, traceW, traceH);
+            for (const loop of loops) {
+                if (loop.length < 3) continue;
+                // Simplify points with RDP algorithm
+                const simplified = this.simplifyRDP(loop, 1.2);
+                if (simplified.length >= 3) {
+                    const bezierPath = this.pointsToBezierPath(simplified, scaleX, scaleY);
+                    if (bezierPath) {
+                        svgPaths += `  <path d="${bezierPath}" fill="${color}" fill-rule="evenodd" />\n`;
+                    }
+                }
             }
         }
 
-        onProgress(90, 'COMPOSING FINAL SVG STRUCTURE...');
-        await this.delay(30);
+        onProgress(90, 'COMPOSING FINAL SVG...');
+        await this.delay(20);
 
         const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
-  <!-- PICSMITH Smooth Contour Vector Tracing -->
+  <!-- PICSMITH Smooth Bézier Vector Tracing -->
 ${svgPaths}</svg>`;
+
+        canvas.width = 0;
+        canvas.height = 0;
 
         return {
             blob: new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' }),
@@ -165,45 +181,138 @@ ${svgPaths}</svg>`;
         };
     }
 
-    // Boundary contour tracing using horizontal run-grouping and polygon contour welding
-    traceLayerContours(mask, width, height, scaleX, scaleY) {
-        let pathD = '';
+    // Extract closed contour loops from a binary mask using boundary run clustering
+    extractContourLoops(mask, width, height) {
+        const loops = [];
         const visited = new Uint8Array(width * height);
 
         for (let y = 0; y < height; y++) {
-            let inRun = false;
-            let startX = 0;
-
             for (let x = 0; x < width; x++) {
                 const idx = y * width + x;
-                const isPixel = mask[idx] === 1;
+                if (mask[idx] === 1 && !visited[idx]) {
+                    // Trace connected contour perimeter
+                    const loop = this.tracePerimeter(mask, visited, x, y, width, height);
+                    if (loop && loop.length >= 4) {
+                        loops.push(loop);
+                    }
+                }
+            }
+        }
+        return loops;
+    }
 
-                if (isPixel && !inRun) {
-                    inRun = true;
-                    startX = x;
-                } else if (!isPixel && inRun) {
-                    inRun = false;
-                    const runWidth = x - startX;
-                    pathD += this.buildPolygonSegment(startX, y, runWidth, 1, scaleX, scaleY);
+    // Moore-Neighbor perimeter tracer
+    tracePerimeter(mask, visited, startX, startY, width, height) {
+        const loop = [{ x: startX, y: startY }];
+        visited[startY * width + startX] = 1;
+
+        let curX = startX;
+        let curY = startY;
+        let dir = 0;
+
+        // 8-directional offsets
+        const dx = [1, 1, 0, -1, -1, -1, 0, 1];
+        const dy = [0, 1, 1, 1, 0, -1, -1, -1];
+
+        const maxSteps = 1200;
+        let steps = 0;
+
+        while (steps < maxSteps) {
+            steps++;
+            let found = false;
+
+            for (let i = 0; i < 8; i++) {
+                const checkDir = (dir + i) % 8;
+                const nx = curX + dx[checkDir];
+                const ny = curY + dy[checkDir];
+
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    if (mask[ny * width + nx] === 1) {
+                        curX = nx;
+                        curY = ny;
+                        dir = (checkDir + 6) % 8;
+                        visited[ny * width + nx] = 1;
+                        loop.push({ x: curX, y: curY });
+                        found = true;
+                        break;
+                    }
                 }
             }
 
-            if (inRun) {
-                const runWidth = width - startX;
-                pathD += this.buildPolygonSegment(startX, y, runWidth, 1, scaleX, scaleY);
+            if (!found || (curX === startX && curY === startY && loop.length > 3)) {
+                break;
             }
         }
 
-        return pathD;
+        return loop;
     }
 
-    buildPolygonSegment(x, y, w, h, sx, sy) {
-        const x0 = +(x * sx).toFixed(1);
-        const y0 = +(y * sy).toFixed(1);
-        const x1 = +((x + w) * sx).toFixed(1);
-        const y1 = +((y + h) * sy).toFixed(1);
+    // Ramer-Douglas-Peucker polygon simplification
+    simplifyRDP(points, epsilon) {
+        if (points.length <= 2) return points;
 
-        return `M${x0} ${y0}H${x1}V${y1}H${x0}Z `;
+        let maxDist = 0;
+        let index = 0;
+        const end = points.length - 1;
+
+        for (let i = 1; i < end; i++) {
+            const d = this.perpendicularDistance(points[i], points[0], points[end]);
+            if (d > maxDist) {
+                index = i;
+                maxDist = d;
+            }
+        }
+
+        if (maxDist > epsilon) {
+            const rec1 = this.simplifyRDP(points.slice(0, index + 1), epsilon);
+            const rec2 = this.simplifyRDP(points.slice(index), epsilon);
+            return rec1.slice(0, rec1.length - 1).concat(rec2);
+        } else {
+            return [points[0], points[end]];
+        }
+    }
+
+    perpendicularDistance(p, p1, p2) {
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        if (dx === 0 && dy === 0) {
+            return Math.hypot(p.x - p1.x, p.y - p1.y);
+        }
+        const num = Math.abs(dy * p.x - dx * p.y + p2.x * p1.y - p2.y * p1.x);
+        return num / Math.hypot(dx, dy);
+    }
+
+    // Convert polygon points into smooth cubic Bézier spline SVG commands
+    pointsToBezierPath(points, scaleX, scaleY) {
+        if (!points || points.length < 3) return '';
+
+        const pts = points.map(p => ({
+            x: +(p.x * scaleX).toFixed(1),
+            y: +(p.y * scaleY).toFixed(1)
+        }));
+
+        let d = `M${pts[0].x} ${pts[0].y}`;
+        const n = pts.length;
+
+        // Fit smooth cubic splines using Catmull-Rom tangent projection
+        const tension = 0.25;
+
+        for (let i = 0; i < n; i++) {
+            const p0 = pts[(i - 1 + n) % n];
+            const p1 = pts[i];
+            const p2 = pts[(i + 1) % n];
+            const p3 = pts[(i + 2) % n];
+
+            const cp1x = +(p1.x + (p2.x - p0.x) * tension).toFixed(1);
+            const cp1y = +(p1.y + (p2.y - p0.y) * tension).toFixed(1);
+            const cp2x = +(p2.x - (p3.x - p1.x) * tension).toFixed(1);
+            const cp2y = +(p2.y - (p3.y - p1.y) * tension).toFixed(1);
+
+            d += ` C${cp1x} ${cp1y},${cp2x} ${cp2y},${p2.x} ${p2.y}`;
+        }
+
+        d += ' Z';
+        return d;
     }
 
     delay(ms) {
