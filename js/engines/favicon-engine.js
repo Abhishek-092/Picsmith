@@ -1,9 +1,12 @@
-// Favicon and multi-resolution ICO packaging engine
+// Favicon and multi-resolution ICO packaging engine with aspect ratio normalization
 
 export class FaviconEngine {
-    async convert({ imageSource, sizes = [16, 32, 48, 64] }) {
+    async convert({ imageSource, sizes = [16, 32, 48, 64], fit = 'contain' }) {
         const selectedSizes = sizes.length > 0 ? sizes : [32];
         const imageBuffers = [];
+
+        const imgW = imageSource.naturalWidth || imageSource.width || 100;
+        const imgH = imageSource.naturalHeight || imageSource.height || 100;
 
         for (const size of selectedSizes) {
             const iconCanvas = document.createElement('canvas');
@@ -13,7 +16,30 @@ export class FaviconEngine {
 
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(imageSource, 0, 0, size, size);
+
+            // Calculate normalized destination dimensions to avoid geometric squashing
+            let dx = 0;
+            let dy = 0;
+            let dWidth = size;
+            let dHeight = size;
+
+            if (fit === 'cover') {
+                // Square center-crop (cover)
+                const scale = Math.max(size / imgW, size / imgH);
+                dWidth = imgW * scale;
+                dHeight = imgH * scale;
+                dx = (size - dWidth) / 2;
+                dy = (size - dHeight) / 2;
+            } else {
+                // Square contain with centered transparent padding (default)
+                const scale = Math.min(size / imgW, size / imgH);
+                dWidth = imgW * scale;
+                dHeight = imgH * scale;
+                dx = (size - dWidth) / 2;
+                dy = (size - dHeight) / 2;
+            }
+
+            ctx.drawImage(imageSource, dx, dy, dWidth, dHeight);
 
             const pngBlob = await new Promise(r => iconCanvas.toBlob(r, 'image/png'));
             const arrayBuffer = await pngBlob.arrayBuffer();
@@ -23,6 +49,10 @@ export class FaviconEngine {
                 height: size,
                 data: new Uint8Array(arrayBuffer)
             });
+
+            // Clean up canvas
+            iconCanvas.width = 0;
+            iconCanvas.height = 0;
         }
 
         const icoBlob = this.buildIcoBinary(imageBuffers);
