@@ -37,6 +37,10 @@ self.onmessage = async function (e) {
 
             const blob = await canvas.convertToBlob({ type: mimeType, quality: effectiveQuality });
 
+            // Clean up offscreen canvas buffer to avoid worker memory retention
+            canvas.width = 0;
+            canvas.height = 0;
+
             // Ensure worker did not silently create wrong format
             if (blob.type !== mimeType && mimeType !== 'image/png') {
                 throw new Error(`Worker OffscreenCanvas does not support encoding ${mimeType}`);
