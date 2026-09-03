@@ -22,6 +22,7 @@ const initialState = {
     aspectRatio: 1,
     matteColor: '#ffffff',
     icoSizes: [16, 32, 48, 64],
+    faviconFit: 'contain',
     svgMode: 'vector-trace',
     
     // Output state
@@ -64,8 +65,11 @@ class StateStore {
     }
 
     reset() {
-        if (this.state.outputUrl) {
+        if (this.state.outputUrl && this.state.outputUrl.startsWith('blob:')) {
             URL.revokeObjectURL(this.state.outputUrl);
+        }
+        if (this.state.sourceDataUrl && this.state.sourceDataUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(this.state.sourceDataUrl);
         }
         this.state = { ...initialState };
         this.notify();
