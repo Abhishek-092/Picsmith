@@ -810,17 +810,17 @@ button, input, select, textarea {
 }
 
 .format-card.disabled::after {
-    content: "UNSUPPORTED";
+    content: attr(data-badge);
     position: absolute;
     top: -9px;
     right: 6px;
-    background: #666;
+    background: #555;
     color: var(--white);
     font-size: 0.5625rem;
     font-weight: 800;
     letter-spacing: 0.12em;
     padding: 1px 5px;
-    border: 1px solid #444;
+    border: 1px solid #333;
 }
 
 .format-ext {
