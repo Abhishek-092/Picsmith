@@ -1,0 +1,9 @@
+{
+  "name": "picsmith",
+  "version": "1.0.0",
+  "description": "Fast, private, client-only in-browser image converter",
+  "type": "module",
+  "scripts": {
+    "dev": "npx -y serve ."
+  }
+}
