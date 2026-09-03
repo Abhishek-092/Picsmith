@@ -1,17 +1,10 @@
-// Conversion router coordinating engines and worker offloading
+// Conversion router coordinating engines, dynamic lazy-loading and worker offloading
 
 import { NativeRasterEngine } from './engines/native-engine.js';
-import { SvgEngine } from './engines/svg-engine.js';
-import { FaviconEngine } from './engines/favicon-engine.js';
-import { AdvancedEngine } from './engines/advanced-engine.js';
 
 export class ConversionRouter {
     constructor() {
         this.nativeEngine = new NativeRasterEngine();
-        this.svgEngine = new SvgEngine();
-        this.faviconEngine = new FaviconEngine();
-        this.advancedEngine = new AdvancedEngine();
-        
         this.worker = null;
         this.initWorker();
     }
@@ -37,25 +30,35 @@ export class ConversionRouter {
             quality,
             matteColor,
             icoSizes,
+            faviconFit = 'contain',
             svgMode
         } = options;
 
-        onProgress(15, 'ROUTING CONVERSION PIPELINE...');
+        onProgress(10, 'ROUTING CONVERSION PIPELINE...');
 
-        // 1. Favicon format route
+        // 1. Favicon format route (Dynamic lazy import)
         if (targetFormat === 'ico') {
-            onProgress(40, 'BUILDING MULTI-RES FAVICON...');
-            const result = await this.faviconEngine.convert({
+            onProgress(25, 'LOADING FAVICON ENGINE...');
+            const { FaviconEngine } = await import('./engines/favicon-engine.js');
+            const faviconEngine = new FaviconEngine();
+
+            onProgress(45, 'BUILDING MULTI-RES FAVICON...');
+            const result = await faviconEngine.convert({
                 imageSource: sourceImage,
-                sizes: icoSizes
+                sizes: icoSizes,
+                fit: faviconFit
             });
             onProgress(90, 'PACKAGING ICO BINARY...');
             return result;
         }
 
-        // 2. SVG output route (vector tracing or embedded vector)
+        // 2. SVG output route (Dynamic lazy import)
         if (targetFormat === 'svg') {
-            const result = await this.svgEngine.rasterToSvg({
+            onProgress(20, 'LOADING VECTOR ENGINE...');
+            const { SvgEngine } = await import('./engines/svg-engine.js');
+            const svgEngine = new SvgEngine();
+
+            const result = await svgEngine.rasterToSvg({
                 imageSource: sourceImage,
                 targetWidth,
                 targetHeight,
@@ -64,11 +67,15 @@ export class ConversionRouter {
             return result;
         }
 
-        // 3. SVG input to raster route
+        // 3. SVG input to raster route (Dynamic lazy import)
         if (sourceFormat === 'svg') {
-            onProgress(40, 'RASTERIZING VECTOR CANVAS...');
+            onProgress(25, 'LOADING SVG RASTERIZER...');
+            const { SvgEngine } = await import('./engines/svg-engine.js');
+            const svgEngine = new SvgEngine();
+
+            onProgress(45, 'RASTERIZING VECTOR CANVAS...');
             const svgText = await sourceFile.text();
-            const result = await this.svgEngine.svgToRaster({
+            const result = await svgEngine.svgToRaster({
                 svgText,
                 targetWidth,
                 targetHeight,
@@ -80,10 +87,12 @@ export class ConversionRouter {
             return result;
         }
 
-        // 4. Advanced format route
-        if (this.advancedEngine.requiresAdvancedCodec(sourceFormat, targetFormat)) {
-            onProgress(35, 'LOADING CODEC MODULE...');
-            await this.advancedEngine.loadCodec(targetFormat);
+        // 4. Advanced format route (TIFF / Advanced codecs)
+        if (sourceFormat === 'tiff' || targetFormat === 'tiff') {
+            onProgress(30, 'LOADING ADVANCED CODEC...');
+            const { AdvancedEngine } = await import('./engines/advanced-engine.js');
+            const advancedEngine = new AdvancedEngine();
+            await advancedEngine.loadCodec(targetFormat);
         }
 
         // 5. Worker offloaded raster conversion (if supported)
