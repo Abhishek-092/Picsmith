@@ -194,6 +194,13 @@ class App {
             });
         });
 
+        // Favicon fit radios
+        document.querySelectorAll('input[name="favicon-fit-mode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                store.set({ faviconFit: e.target.value });
+            });
+        });
+
         // Reset source button
         dom.btnRemoveSource.addEventListener('click', () => {
             store.reset();
@@ -234,6 +241,7 @@ class App {
                     quality: state.targetQuality,
                     matteColor: state.matteColor,
                     icoSizes: icoSizes.length > 0 ? icoSizes : [32],
+                    faviconFit: state.faviconFit || 'contain',
                     svgMode: state.svgMode
                 },
                 (progress, label) => this.ui.setProgress(progress, label)
