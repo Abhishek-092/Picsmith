@@ -145,25 +145,36 @@ export class UIController {
     }
 
     updateFormatAvailability(state) {
-        const sourceFmt = state.sourceFormat;
+        const rawSourceFmt = (state.sourceFormat || '').toLowerCase();
+        const normSourceFmt = (rawSourceFmt === 'jpg' || rawSourceFmt === 'jpeg') ? 'jpeg' : rawSourceFmt;
         const isAvifEncodable = this.checkAvifEncodingSupport();
         let isCurrentTargetValid = true;
 
         this.dom.formatCards.forEach(card => {
             const fmt = card.dataset.format;
+            const normTargetFmt = (fmt === 'jpg' || fmt === 'jpeg') ? 'jpeg' : fmt;
             let isSupported = true;
+            let badgeText = '';
 
-            // AVIF browser encoder support
-            if (fmt === 'avif' && !isAvifEncodable) {
+            // 1. Same format conversion is redundant
+            if (normSourceFmt && normSourceFmt === normTargetFmt) {
                 isSupported = false;
+                badgeText = 'SAME FORMAT';
             }
-
-            // SVG to SVG is redundant / not a valid conversion
-            if (sourceFmt === 'svg' && fmt === 'svg') {
+            // 2. AVIF browser encoder support
+            else if (fmt === 'avif' && !isAvifEncodable) {
                 isSupported = false;
+                badgeText = 'UNSUPPORTED';
             }
 
             card.classList.toggle('disabled', !isSupported);
+
+            if (!isSupported) {
+                card.setAttribute('data-badge', badgeText);
+                card.classList.remove('selected');
+            } else {
+                card.removeAttribute('data-badge');
+            }
 
             if (state.targetFormat === fmt && !isSupported) {
                 isCurrentTargetValid = false;
@@ -323,6 +334,11 @@ export class UIController {
         this.dom.fileInput.value = '';
         this.dom.sourcePreviewImg.src = '';
         this.dom.outputPreviewImg.src = '';
+        this.dom.formatCards.forEach(c => {
+            c.classList.remove('disabled');
+            c.removeAttribute('data-badge');
+            c.classList.toggle('selected', c.dataset.format === 'webp');
+        });
         this.dom.panelSourceInfo.classList.add('hidden');
         this.dom.panelSettings.classList.add('hidden');
         this.dom.panelAction.classList.add('hidden');
