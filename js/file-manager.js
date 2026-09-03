@@ -2,13 +2,11 @@
 
 import { validateImageFile } from './utils/validation.js';
 import { detectFormat } from './format-detector.js';
-import { AdvancedEngine } from './engines/advanced-engine.js';
 
 export class FileManager {
     constructor({ onFileLoaded, onError }) {
         this.onFileLoaded = onFileLoaded;
         this.onError = onError;
-        this.advancedEngine = new AdvancedEngine();
     }
 
     async processFile(file) {
@@ -21,18 +19,21 @@ export class FileManager {
         try {
             const formatInfo = await detectFormat(file);
 
-            // Handle TIFF format decoding via AdvancedEngine
+            // Handle TIFF format decoding via dynamic lazy-loaded AdvancedEngine
             if (formatInfo.format === 'tiff') {
+                const { AdvancedEngine } = await import('./engines/advanced-engine.js');
+                const advancedEngine = new AdvancedEngine();
                 const arrayBuffer = await file.arrayBuffer();
-                const canvas = await this.advancedEngine.parseTiffToCanvas(arrayBuffer);
-                const dataUrl = canvas.toDataURL('image/png');
+                const canvas = await advancedEngine.parseTiffToCanvas(arrayBuffer);
+                const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+                const objectUrl = URL.createObjectURL(blob);
 
                 const img = new Image();
                 img.onload = () => {
                     this.onFileLoaded({
                         file,
                         image: img,
-                        dataUrl,
+                        dataUrl: objectUrl,
                         name: file.name,
                         size: file.size,
                         type: 'image/tiff',
@@ -42,11 +43,12 @@ export class FileManager {
                         aspectRatio: canvas.width / canvas.height
                     });
                 };
-                img.src = dataUrl;
+                img.src = objectUrl;
                 return;
             }
 
-            const dataUrl = await this.readFileAsDataUrl(file);
+            // Zero-copy ObjectURL for instant memory-efficient preview
+            const objectUrl = URL.createObjectURL(file);
 
             const img = new Image();
             img.onload = () => {
@@ -56,7 +58,7 @@ export class FileManager {
                 this.onFileLoaded({
                     file,
                     image: img,
-                    dataUrl,
+                    dataUrl: objectUrl,
                     name: file.name,
                     size: file.size,
                     type: formatInfo.mimeType || file.type,
@@ -68,22 +70,14 @@ export class FileManager {
             };
 
             img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
                 this.onError('Failed to decode image data. The file may be corrupt.');
             };
 
-            img.src = dataUrl;
+            img.src = objectUrl;
         } catch (err) {
             this.onError(`Error reading file: ${err.message}`);
         }
-    }
-
-    readFileAsDataUrl(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
     }
 
     setupDragAndDrop(dropZoneElement, onHoverStateChange = () => {}) {
