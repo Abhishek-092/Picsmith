@@ -22,6 +22,12 @@ export function generateOutputFilename(originalName, targetFormat) {
     return `picsmith-${sanitized}.${ext}`;
 }
 
+export function generateFaviconZipFilename(originalName) {
+    const base = getFileBaseName(originalName) || 'favicon';
+    const sanitized = base.replace(/[^a-z0-9_\-\.]/gi, '_').replace(/_{2,}/g, '_');
+    return `${sanitized}-favicon.zip`;
+}
+
 export function formatBytes(bytes, decimals = 2) {
     if (!bytes || bytes === 0) return '0 BYTES';
     const k = 1024;
