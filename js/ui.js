@@ -1,6 +1,6 @@
 // UI Controller managing DOM interactions, estimation and view updates
 
-import { formatBytes, calculateAspectRatio, generateOutputFilename } from './utils/filename.js';
+import { formatBytes, calculateAspectRatio, generateOutputFilename, generateFaviconZipFilename } from './utils/filename.js';
 
 export class UIController {
     constructor() {
@@ -69,7 +69,16 @@ export class UIController {
             outMetricSize: document.getElementById('out-metric-size'),
             outMetricDimensions: document.getElementById('out-metric-dimensions'),
             outMetricTime: document.getElementById('out-metric-time'),
+            
+            // Standard and Favicon download containers
+            standardDownloadAction: document.getElementById('standard-download-action'),
             btnDownloadArtifact: document.getElementById('btn-download-artifact'),
+            faviconDualActions: document.getElementById('favicon-dual-actions'),
+            btnDownloadZip: document.getElementById('btn-download-zip'),
+            btnDownloadIco: document.getElementById('btn-download-ico'),
+            faviconFilesContainer: document.getElementById('favicon-files-container'),
+            faviconFilesGrid: document.getElementById('favicon-files-grid'),
+
             btnCopyClipboard: document.getElementById('btn-copy-clipboard'),
             btnConvertAnother: document.getElementById('btn-convert-another')
         };
@@ -247,12 +256,8 @@ export class UIController {
                 estBytes = Math.round(sourceSize * pixelRatio);
             }
         } else if (fmt === 'ico') {
-            const sizes = state.icoSizes || [16, 32, 48, 64];
-            let icoBytes = 6 + (16 * sizes.length);
-            for (const s of sizes) {
-                icoBytes += Math.round(s * s * 0.5) + 40;
-            }
-            estBytes = icoBytes;
+            // Full Favicon package: multi-res ICO (16,32,48) + 6 PNGs + manifest + ZIP container
+            estBytes = Math.round(85000 * Math.min(1.2, Math.max(0.6, pixelRatio)));
         } else if (fmt === 'svg') {
             if (state.svgMode === 'vector-trace') {
                 const traceGrid = Math.min(256 * 256, totalPixels);
@@ -288,16 +293,19 @@ export class UIController {
         this.dom.btnViewOutput?.classList.add('active');
         this.dom.btnViewOriginal?.classList.remove('active');
 
-        this.dom.outMetricFormat.textContent = state.targetFormat.toUpperCase();
+        this.dom.outMetricFormat.textContent = state.isFaviconPackage ? 'FAVICON (PACKAGE)' : state.targetFormat.toUpperCase();
         this.dom.outMetricSize.textContent = formatBytes(state.outputSize);
-        this.dom.outMetricDimensions.textContent = `${state.outputWidth} × ${state.outputHeight} PX`;
+        this.dom.outMetricDimensions.textContent = state.isFaviconPackage ? '16×16 TO 512×512' : `${state.outputWidth} × ${state.outputHeight} PX`;
         this.dom.outMetricTime.textContent = `${state.conversionTimeMs} MS`;
 
         // Size difference calculation
         const deltaBytes = state.outputSize - state.sourceSize;
         const deltaPercent = Math.round((deltaBytes / state.sourceSize) * 100);
 
-        if (deltaPercent < 0) {
+        if (state.isFaviconPackage) {
+            this.dom.outputSavingsBadge.textContent = 'COMPLETE PACKAGE GENERATED';
+            this.dom.outputSavingsBadge.className = 'savings-badge';
+        } else if (deltaPercent < 0) {
             this.dom.outputSavingsBadge.textContent = `${Math.abs(deltaPercent)}% SMALLER (${formatBytes(Math.abs(deltaBytes))} SAVED)`;
             this.dom.outputSavingsBadge.className = 'savings-badge';
         } else if (deltaPercent === 0) {
@@ -308,9 +316,48 @@ export class UIController {
             this.dom.outputSavingsBadge.className = 'savings-badge increased';
         }
 
-        const downloadFilename = generateOutputFilename(state.sourceName, state.targetFormat);
-        this.dom.btnDownloadArtifact.href = state.outputUrl;
-        this.dom.btnDownloadArtifact.download = downloadFilename;
+        // Configure download buttons based on conversion mode
+        if (state.isFaviconPackage) {
+            this.dom.standardDownloadAction?.classList.add('hidden');
+            this.dom.faviconDualActions?.classList.remove('hidden');
+
+            const zipName = state.outputZipName || generateFaviconZipFilename(state.sourceName);
+            this.dom.btnDownloadZip.href = state.outputZipUrl;
+            this.dom.btnDownloadZip.download = zipName;
+
+            this.dom.btnDownloadIco.href = state.outputIcoUrl;
+            this.dom.btnDownloadIco.download = 'favicon.ico';
+
+            // Populate generated assets cards
+            if (this.dom.faviconFilesContainer && this.dom.faviconFilesGrid) {
+                this.dom.faviconFilesContainer.classList.remove('hidden');
+                this.dom.faviconFilesGrid.innerHTML = '';
+
+                (state.faviconFiles || []).forEach(file => {
+                    const card = document.createElement('div');
+                    card.className = 'favicon-file-card';
+                    card.innerHTML = `
+                        <div class="favicon-file-card-top">
+                            <span class="favicon-file-name">${file.name}</span>
+                            <span class="favicon-file-res">${file.resolution}</span>
+                        </div>
+                        <div class="favicon-file-meta">
+                            <span>${file.purpose}</span>
+                            <span>${formatBytes(file.size)}</span>
+                        </div>
+                    `;
+                    this.dom.faviconFilesGrid.appendChild(card);
+                });
+            }
+        } else {
+            this.dom.standardDownloadAction?.classList.remove('hidden');
+            this.dom.faviconDualActions?.classList.add('hidden');
+            this.dom.faviconFilesContainer?.classList.add('hidden');
+
+            const downloadFilename = generateOutputFilename(state.sourceName, state.targetFormat);
+            this.dom.btnDownloadArtifact.href = state.outputUrl;
+            this.dom.btnDownloadArtifact.download = downloadFilename;
+        }
 
         this.dom.panelOutput.classList.remove('hidden');
         this.dom.panelOutput.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -343,6 +390,7 @@ export class UIController {
         this.dom.panelSettings.classList.add('hidden');
         this.dom.panelAction.classList.add('hidden');
         this.dom.panelOutput.classList.add('hidden');
+        this.dom.faviconFilesContainer?.classList.add('hidden');
         this.dom.panelInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
