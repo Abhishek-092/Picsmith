@@ -229,7 +229,7 @@ button, input, select, textarea {
     font-family: var(--font-mono);
     font-weight: 700;
     font-size: 0.875rem;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.23em;
     text-transform: uppercase;
     color: var(--ink);
     display: flex;
