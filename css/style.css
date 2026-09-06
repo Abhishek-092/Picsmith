@@ -1644,4 +1644,9 @@ button, input, select, textarea {
         flex-direction: column;
         align-items: flex-start;
     }
+
+    .favicon-specs-grid,
+    .favicon-files-grid {
+        grid-template-columns: 1fr;
+    }
 }
