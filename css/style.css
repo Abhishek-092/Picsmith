@@ -169,6 +169,7 @@ button, input, select, textarea {
     justify-content: center;
     flex-shrink: 0;
     transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: translateX(-5px);
     user-select: none;
 }
 
@@ -192,6 +193,8 @@ button, input, select, textarea {
     line-height: 0.86;
     letter-spacing: -0.04em;
     text-transform: uppercase;
+    position: relative;
+    left: -10px;
     color: var(--ink);
     margin: 0;
 }
