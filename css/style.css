@@ -163,6 +163,28 @@ button, input, select, textarea {
     flex-wrap: wrap;
 }
 
+.brand-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    user-select: none;
+}
+
+.brand-logo-wrap:hover {
+    transform: rotate(-5deg) scale(1.08);
+}
+
+.brand-logo-svg {
+    width: clamp(48px, 6.2vw, 76px);
+    height: auto;
+    max-height: clamp(48px, 6.2vw, 76px);
+    object-fit: contain;
+    filter: drop-shadow(4px 4px 0px var(--ink));
+    display: block;
+}
+
 .brand-title {
     font-family: var(--font-display);
     font-weight: 900;
