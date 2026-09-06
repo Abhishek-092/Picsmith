@@ -42,13 +42,14 @@ export class ConversionRouter {
             const { FaviconEngine } = await import('./engines/favicon-engine.js');
             const faviconEngine = new FaviconEngine();
 
-            onProgress(45, 'BUILDING MULTI-RES FAVICON...');
+            onProgress(45, 'GENERATING MULTI-RESOLUTION FAVICON PACKAGE...');
             const result = await faviconEngine.convert({
                 imageSource: sourceImage,
-                sizes: icoSizes,
-                fit: faviconFit
+                baseName: options.sourceName || 'favicon',
+                fit: faviconFit,
+                onProgress
             });
-            onProgress(90, 'PACKAGING ICO BINARY...');
+            onProgress(95, 'FINALIZING ZIP ARCHIVE...');
             return result;
         }
 
