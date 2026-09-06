@@ -35,7 +35,16 @@ const initialState = {
     outputWidth: 0,
     outputHeight: 0,
     conversionTimeMs: 0,
-    errorMessage: null
+    errorMessage: null,
+
+    // Favicon package state
+    isFaviconPackage: false,
+    outputIcoBlob: null,
+    outputIcoUrl: null,
+    outputZipBlob: null,
+    outputZipUrl: null,
+    outputZipName: '',
+    faviconFiles: []
 };
 
 class StateStore {
@@ -67,6 +76,12 @@ class StateStore {
     reset() {
         if (this.state.outputUrl && this.state.outputUrl.startsWith('blob:')) {
             URL.revokeObjectURL(this.state.outputUrl);
+        }
+        if (this.state.outputIcoUrl && this.state.outputIcoUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(this.state.outputIcoUrl);
+        }
+        if (this.state.outputZipUrl && this.state.outputZipUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(this.state.outputZipUrl);
         }
         if (this.state.sourceDataUrl && this.state.sourceDataUrl.startsWith('blob:')) {
             URL.revokeObjectURL(this.state.sourceDataUrl);
