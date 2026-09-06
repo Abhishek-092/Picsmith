@@ -283,18 +283,29 @@
                                 </div>
                             </div>
 
-                            <!-- Favicon sizes -->
+                            <!-- Favicon package options -->
                             <div class="options-row hidden" id="opt-ico-sizes">
-                                <span class="input-label">PACK FAVICON RESOLUTIONS:</span>
-                                <label class="checkbox-row"><input type="checkbox" id="ico-sz-16" checked> 16x16</label>
-                                <label class="checkbox-row"><input type="checkbox" id="ico-sz-32" checked> 32x32 (STANDARD)</label>
-                                <label class="checkbox-row"><input type="checkbox" id="ico-sz-48" checked> 48x48</label>
-                                <label class="checkbox-row"><input type="checkbox" id="ico-sz-64" checked> 64x64</label>
+                                <div class="favicon-config-box">
+                                    <div class="favicon-package-header">
+                                        <span class="input-label">COMPLETE FAVICON PACKAGE (AUTO-GENERATED):</span>
+                                        <span class="badge">7 ICONS + MANIFEST</span>
+                                    </div>
+                                    <div class="favicon-specs-grid">
+                                        <div class="favicon-spec-item"><span class="spec-name">favicon.ico</span><span class="spec-detail">16, 32, 48 Multi-res</span></div>
+                                        <div class="favicon-spec-item"><span class="spec-name">favicon-16x16.png</span><span class="spec-detail">Browser Tab</span></div>
+                                        <div class="favicon-spec-item"><span class="spec-name">favicon-32x32.png</span><span class="spec-detail">High-DPI Tab</span></div>
+                                        <div class="favicon-spec-item"><span class="spec-name">favicon-48x48.png</span><span class="spec-detail">Desktop Icon</span></div>
+                                        <div class="favicon-spec-item"><span class="spec-name">apple-touch-icon.png</span><span class="spec-detail">180×180 iOS</span></div>
+                                        <div class="favicon-spec-item"><span class="spec-name">favicon-192x192.png</span><span class="spec-detail">192×192 Android</span></div>
+                                        <div class="favicon-spec-item"><span class="spec-name">favicon-512x512.png</span><span class="spec-detail">512×512 PWA Splash</span></div>
+                                        <div class="favicon-spec-item"><span class="spec-name">site.webmanifest</span><span class="spec-detail">PWA Manifest</span></div>
+                                    </div>
 
-                                <div class="favicon-fit-group" style="width: 100%; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
-                                    <span class="input-label">SQUARE NORMALIZATION:</span>
-                                    <label class="checkbox-row"><input type="radio" name="favicon-fit-mode" value="contain" checked> CONTAIN (CENTER &amp; PAD)</label>
-                                    <label class="checkbox-row"><input type="radio" name="favicon-fit-mode" value="cover"> COVER (CENTER-CROP)</label>
+                                    <div class="favicon-fit-group">
+                                        <span class="input-label">SQUARE NORMALIZATION:</span>
+                                        <label class="checkbox-row"><input type="radio" name="favicon-fit-mode" value="contain" checked> CONTAIN (CENTER &amp; PAD WITH ALPHA)</label>
+                                        <label class="checkbox-row"><input type="radio" name="favicon-fit-mode" value="cover"> COVER (CENTER-CROP)</label>
+                                    </div>
                                 </div>
                             </div>
 
@@ -393,15 +404,53 @@
                                 </div>
                             </div>
 
+                            <!-- Favicon package file list (shown when target is ICO) -->
+                            <div class="favicon-files-container hidden" id="favicon-files-container">
+                                <div class="favicon-files-header">
+                                    <span class="favicon-files-title">GENERATED FAVICON PACKAGE (8 ASSETS)</span>
+                                    <span class="badge">ALL-IN-ONE</span>
+                                </div>
+                                <div class="favicon-files-grid" id="favicon-files-grid">
+                                    <!-- Populated dynamically by UIController -->
+                                </div>
+                            </div>
+
                             <div class="output-actions-grid">
-                                <a id="btn-download-artifact" class="brutal-btn btn-acid btn-lg" download="converted-image">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                        <polyline points="7 10 12 15 17 10"/>
-                                        <line x1="12" y1="15" x2="12" y2="3"/>
-                                    </svg>
-                                    DOWNLOAD ARTIFACT
-                                </a>
+                                <!-- Standard Download (WebP, PNG, JPG, AVIF, SVG) -->
+                                <div id="standard-download-action">
+                                    <a id="btn-download-artifact" class="brutal-btn btn-acid btn-lg" download="converted-image">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                            <polyline points="7 10 12 15 17 10"/>
+                                            <line x1="12" y1="15" x2="12" y2="3"/>
+                                        </svg>
+                                        DOWNLOAD ARTIFACT
+                                    </a>
+                                </div>
+
+                                <!-- Favicon Dual Download Actions (Favicon mode) -->
+                                <div id="favicon-dual-actions" class="favicon-dual-actions-box hidden">
+                                    <a id="btn-download-zip" class="brutal-btn btn-acid btn-lg favicon-btn-zip" download="favicon-package.zip">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                            <polyline points="7 10 12 15 17 10"/>
+                                            <line x1="12" y1="15" x2="12" y2="3"/>
+                                        </svg>
+                                        <div class="btn-text-stack">
+                                            <span class="btn-main-title">DOWNLOAD COMPLETE PACKAGE (.ZIP)</span>
+                                            <span class="btn-sub-label">ALL 7 ICONS + SITE.WEBMANIFEST</span>
+                                        </div>
+                                    </a>
+
+                                    <a id="btn-download-ico" class="brutal-btn btn-pink btn-md favicon-btn-ico" download="favicon.ico">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                                            <polyline points="21 15 16 10 5 21"/>
+                                        </svg>
+                                        <span>QUICK DOWNLOAD FAVICON.ICO (16 / 32 / 48)</span>
+                                    </a>
+                                </div>
 
                                 <div class="button-row-center">
                                     <button type="button" class="brutal-btn btn-blue btn-sm" id="btn-copy-clipboard">
