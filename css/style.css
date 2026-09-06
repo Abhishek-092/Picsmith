@@ -1400,6 +1400,211 @@ button, input, select, textarea {
     }
 }
 
+/* ==========================================================================
+   Favicon Package & Multi-Resolution ICO Styles
+   ========================================================================== */
+
+.favicon-config-box {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: var(--paper);
+    border: var(--border-md);
+    box-shadow: var(--shadow-sm);
+    padding: 16px;
+}
+
+.favicon-package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: var(--border-sm);
+}
+
+.favicon-specs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.favicon-spec-item {
+    background: var(--white);
+    border: var(--border-sm);
+    box-shadow: 2px 2px 0 0 var(--ink);
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.favicon-spec-item .spec-name {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 0.75rem;
+    color: var(--ink);
+}
+
+.favicon-spec-item .spec-detail {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.favicon-fit-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding-top: 10px;
+    border-top: var(--border-sm);
+}
+
+/* Step 5 Output Favicon Package Breakdown */
+.favicon-files-container {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--white);
+    border: var(--border-md);
+    box-shadow: var(--shadow-sm);
+    padding: 16px;
+}
+
+.favicon-files-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: var(--border-sm);
+}
+
+.favicon-files-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.favicon-files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 10px;
+}
+
+.favicon-file-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--paper);
+    border: var(--border-sm);
+    box-shadow: 2px 2px 0 0 var(--ink);
+    padding: 8px 12px;
+}
+
+.favicon-file-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.favicon-file-name {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 0.75rem;
+    color: var(--ink);
+    word-break: break-all;
+}
+
+.favicon-file-res {
+    font-family: var(--font-mono);
+    font-weight: 900;
+    font-size: 0.6875rem;
+    background: var(--acid-yellow);
+    border: 1px solid var(--ink);
+    padding: 1px 4px;
+    white-space: nowrap;
+}
+
+.favicon-file-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: #444;
+}
+
+/* Dual Download Actions */
+.favicon-dual-actions-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.favicon-btn-zip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    text-align: left;
+    padding: 16px 20px;
+    background: var(--acid-yellow);
+}
+
+.favicon-btn-zip:hover {
+    background: #f4ff4f;
+}
+
+.btn-text-stack {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.btn-main-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.125rem;
+    letter-spacing: -0.01em;
+}
+
+.btn-sub-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    opacity: 0.85;
+}
+
+.favicon-btn-ico {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--hot-pink);
+    color: var(--white);
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+}
+
+.favicon-btn-ico:hover {
+    background: #ff78a0;
+    color: var(--white);
+}
+
 @media (max-width: 540px) {
     .app-container {
         padding: 16px 12px 40px;
