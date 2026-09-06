@@ -4,6 +4,7 @@ import { store } from './state.js';
 import { UIController } from './ui.js';
 import { FileManager } from './file-manager.js';
 import { ConversionRouter } from './conversion-router.js';
+import { generateFaviconZipFilename } from './utils/filename.js';
 
 class App {
     constructor() {
@@ -224,25 +225,22 @@ class App {
         this.ui.hideError();
         const startTime = performance.now();
 
-        // Selected ICO sizes
-        const icoSizes = [];
-        if (this.ui.dom.icoCheckboxes[16]?.checked) icoSizes.push(16);
-        if (this.ui.dom.icoCheckboxes[32]?.checked) icoSizes.push(32);
-        if (this.ui.dom.icoCheckboxes[48]?.checked) icoSizes.push(48);
-        if (this.ui.dom.icoCheckboxes[64]?.checked) icoSizes.push(64);
+        // Selected ICO sizes (standard multi-res package)
+        const icoSizes = [16, 32, 48];
 
         try {
             const result = await this.router.routeConversion(
                 {
                     sourceFile: state.sourceFile,
                     sourceImage: state.sourceImage,
+                    sourceName: state.sourceName,
                     sourceFormat: state.sourceFormat,
                     targetFormat: state.targetFormat,
                     targetWidth: state.targetWidth || state.sourceWidth,
                     targetHeight: state.targetHeight || state.sourceHeight,
                     quality: state.targetQuality,
                     matteColor: state.matteColor,
-                    icoSizes: icoSizes.length > 0 ? icoSizes : [32],
+                    icoSizes,
                     faviconFit: state.faviconFit || 'contain',
                     svgMode: state.svgMode
                 },
@@ -252,19 +250,50 @@ class App {
             const endTime = performance.now();
             const duration = Math.round(endTime - startTime);
 
-            const oldUrl = state.outputUrl;
-            if (oldUrl) URL.revokeObjectURL(oldUrl);
+            // Clean up previous Object URLs
+            if (state.outputUrl) URL.revokeObjectURL(state.outputUrl);
+            if (state.outputIcoUrl && state.outputIcoUrl !== state.outputUrl) URL.revokeObjectURL(state.outputIcoUrl);
+            if (state.outputZipUrl) URL.revokeObjectURL(state.outputZipUrl);
 
-            const outputUrl = URL.createObjectURL(result.blob);
+            if (result.isPackage) {
+                const outputIcoUrl = URL.createObjectURL(result.icoBlob);
+                const outputZipUrl = URL.createObjectURL(result.zipBlob);
+                const outputZipName = generateFaviconZipFilename(state.sourceName);
 
-            store.set({
-                outputBlob: result.blob,
-                outputUrl,
-                outputSize: result.blob.size,
-                outputWidth: result.width,
-                outputHeight: result.height,
-                conversionTimeMs: duration
-            });
+                store.set({
+                    outputBlob: result.icoBlob,
+                    outputUrl: outputIcoUrl,
+                    outputSize: result.zipBlob.size,
+                    outputWidth: result.width,
+                    outputHeight: result.height,
+                    conversionTimeMs: duration,
+                    isFaviconPackage: true,
+                    outputIcoBlob: result.icoBlob,
+                    outputIcoUrl,
+                    outputZipBlob: result.zipBlob,
+                    outputZipUrl,
+                    outputZipName,
+                    faviconFiles: result.files
+                });
+            } else {
+                const outputUrl = URL.createObjectURL(result.blob);
+
+                store.set({
+                    outputBlob: result.blob,
+                    outputUrl,
+                    outputSize: result.blob.size,
+                    outputWidth: result.width,
+                    outputHeight: result.height,
+                    conversionTimeMs: duration,
+                    isFaviconPackage: false,
+                    outputIcoBlob: null,
+                    outputIcoUrl: null,
+                    outputZipBlob: null,
+                    outputZipUrl: null,
+                    outputZipName: '',
+                    faviconFiles: []
+                });
+            }
 
             this.ui.hideProgress();
             this.ui.renderOutputArtifact(store.get());
